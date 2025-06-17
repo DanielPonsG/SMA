@@ -1,0 +1,31 @@
+<!-- filepath: c:\Users\Danie\Desktop\Proyecto_Titulo\sma\templates\eliminar_evento.html -->
+{% extends "index_master.html" %}
+
+{% block content %}
+<div class="right_col" role="main">
+  <div class="container-fluid">
+    <div class="row justify-content-center">
+      <div class="col-md-8 col-lg-7">
+        <div class="x_panel">
+          <div class="x_title">
+            <h2>Eliminar Evento</h2>
+            <div class="clearfix"></div>
+          </div>
+          <div class="x_content">
+            <div class="alert alert-danger">
+              ¿Estás seguro que deseas eliminar el evento <strong>{{ evento.titulo }}</strong> del {{ evento.fecha }}?
+            </div>
+            <form method="post">
+              {% csrf_token %}
+              <div class="text-center">
+                <button type="submit" class="btn btn-danger px-4">Eliminar</button>
+                <a href="{% url 'calendario' %}" class="btn btn-secondary px-4">Cancelar</a>
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

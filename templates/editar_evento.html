@@ -1,0 +1,37 @@
+<!-- filepath: c:\Users\Danie\Desktop\Proyecto_Titulo\sma\templates\editar_evento.html -->
+{% extends "index_master.html" %}
+
+{% block content %}
+<div class="right_col" role="main">
+  <div class="container-fluid">
+    <div class="row justify-content-center">
+      <div class="col-md-8 col-lg-7">
+        <div class="x_panel">
+          <div class="x_title">
+            <h2>Editar Evento</h2>
+            <div class="clearfix"></div>
+          </div>
+          <div class="x_content">
+            <form method="post">
+              {% csrf_token %}
+              {% for field in form %}
+                <div class="mb-2">
+                  <label class="form-label fw-bold">{{ field.label }}</label>
+                  {{ field }}
+                  {% for error in field.errors %}
+                    <div class="text-danger small">{{ error }}</div>
+                  {% endfor %}
+                </div>
+              {% endfor %}
+              <div class="text-center mt-3">
+                <button type="submit" class="btn btn-success px-4">Guardar Cambios</button>
+                <a href="{% url 'calendario' %}" class="btn btn-secondary px-4">Cancelar</a>
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

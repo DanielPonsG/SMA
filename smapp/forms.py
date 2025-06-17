@@ -1,5 +1,5 @@
 from django import forms
-from .models import Estudiante, Profesor
+from .models import Estudiante, Profesor, EventoCalendario
 
 class EstudianteForm(forms.ModelForm):
     class Meta:
@@ -23,4 +23,12 @@ class ProfesorForm(forms.ModelForm):
         ]
         widgets = {
             'fecha_nacimiento': forms.DateInput(attrs={'type': 'date'}),
+        }
+
+class EventoCalendarioForm(forms.ModelForm):
+    class Meta:
+        model = EventoCalendario
+        fields = ['titulo', 'descripcion', 'fecha', 'prioridad']
+        widgets = {
+            'fecha': forms.DateInput(attrs={'type': 'date'}),
         }

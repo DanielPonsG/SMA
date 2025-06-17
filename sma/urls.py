@@ -16,7 +16,7 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path
-from smapp.views import index_master, index, agregar, modificar, eliminar, listar_estudiantes
+from smapp.views import index_master, index, agregar, modificar, eliminar, listar_estudiantes, calendario, editar_evento, eliminar_evento
 
 
 urlpatterns = [
@@ -28,5 +28,7 @@ urlpatterns = [
     path('modificar', modificar, name='modificar'),
     path('eliminar', eliminar, name='eliminar'),
     path('estudiantes/listar/', listar_estudiantes, name='listar_estudiantes'),
-
+    path('calendario/', calendario, name='calendario'),
+    path('calendario/editar/<int:evento_id>/', editar_evento, name='editar_evento'),
+    path('calendario/eliminar/<int:evento_id>/', eliminar_evento, name='eliminar_evento'),
 ]

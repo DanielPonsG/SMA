@@ -1,0 +1,128 @@
+<!-- filepath: c:\Users\Danie\Desktop\Proyecto_Titulo\sma\templates\calendario.html -->
+{% extends "index_master.html" %}
+
+{% block content %}
+<div class="right_col" role="main">
+  <div class="container-fluid">
+    <div class="row justify-content-center">
+      <div class="col-md-10 col-lg-12">
+        <div class="x_panel">
+          <div class="x_title">
+            <h2>Calendario de Eventos</h2>
+            <div class="clearfix"></div>
+          </div>
+          <div class="x_content">
+
+            <!-- Formulario para agregar evento -->
+            <div class="card mb-4 shadow-sm">
+              <div class="card-header bg-success text-white">
+                <strong>Agregar nuevo evento</strong>
+              </div>
+              <div class="card-body">
+                {% if mensaje %}
+                  <div class="alert alert-success">{{ mensaje }}</div>
+                {% endif %}
+                <form method="post" class="row g-3">
+                  {% csrf_token %}
+                  <div class="col-md-6">
+                    {{ form.titulo.label_tag }} {{ form.titulo }}
+                  </div>
+                  <div class="col-md-3">
+                    {{ form.fecha.label_tag }} {{ form.fecha }}
+                  </div>
+                  <div class="col-md-3">
+                    {{ form.prioridad.label_tag }} {{ form.prioridad }}
+                  </div>
+                  <div class="col-md-12">
+                    {{ form.descripcion.label_tag }} {{ form.descripcion }}
+                  </div>
+                  <div class="col-12 text-center">
+                    <button type="submit" class="btn btn-success">Agregar Evento</button>
+                  </div>
+                </form>
+              </div>
+            </div>
+
+            <!-- Filtros -->
+            <div class="card mb-4">
+              <div class="card-header bg-primary text-white">
+                <strong>Filtrar eventos</strong>
+              </div>
+              <div class="card-body">
+                <form method="get" class="row g-2">
+                  <div class="col-md-4">
+                    <input type="text" name="titulo" class="form-control" placeholder="Buscar por título..." value="{{ request.GET.titulo }}">
+                  </div>
+                  <div class="col-md-3">
+                    <input type="date" name="fecha" class="form-control" value="{{ filtro_fecha }}">
+                  </div>
+                  <div class="col-md-3">
+                    <select name="prioridad" class="form-control">
+                      <option value="">Todas las prioridades</option>
+                      <option value="alta" {% if filtro_prioridad == 'alta' %}selected{% endif %}>Alta</option>
+                      <option value="media" {% if filtro_prioridad == 'media' %}selected{% endif %}>Media</option>
+                      <option value="baja" {% if filtro_prioridad == 'baja' %}selected{% endif %}>Baja</option>
+                    </select>
+                  </div>
+                  <div class="col-md-2">
+                    <button type="submit" class="btn btn-primary w-100">Filtrar</button>
+                  </div>
+                </form>
+              </div>
+            </div>
+
+            <!-- Tabla de eventos -->
+            <div class="card">
+              <div class="card-header bg-dark text-white">
+                <strong>Próximos eventos</strong>
+              </div>
+              <div class="card-body p-0">
+                <div class="table-responsive">
+                  <table class="table table-bordered table-striped mb-0">
+                    <thead>
+                      <tr>
+                        <th>Fecha</th>
+                        <th>Título</th>
+                        <th>Descripción</th>
+                        <th>Prioridad</th>
+                        <th style="width:120px;">Acciones</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {% for evento in eventos %}
+                      <tr>
+                        <td>{{ evento.fecha }}</td>
+                        <td>{{ evento.titulo }}</td>
+                        <td>{{ evento.descripcion }}</td>
+                        <td>
+                          {% if evento.prioridad == 'alta' %}
+                            <span class="badge bg-danger">Alta</span>
+                          {% elif evento.prioridad == 'media' %}
+                            <span class="badge bg-warning text-dark">Media</span>
+                          {% else %}
+                            <span class="badge bg-info text-dark">Baja</span>
+                          {% endif %}
+                        </td>
+                        <td>
+                          <a href="{% url 'editar_evento' evento.id %}" class="btn btn-sm btn-outline-primary">Editar</a>
+                          <a href="{% url 'eliminar_evento' evento.id %}" class="btn btn-sm btn-outline-danger">Eliminar</a>
+                        </td>
+                      </tr>
+                      {% empty %}
+                      <tr>
+                        <td colspan="5" class="text-center">No hay eventos registrados.</td>
+                      </tr>
+                      {% endfor %}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+            <!-- Fin tabla -->
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

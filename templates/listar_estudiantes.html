@@ -1,56 +1,117 @@
+
 {% extends "index_master.html" %}
 
 {% block content %}
 <div class="right_col" role="main">
   <div class="container-fluid">
-    <div class="row justify-content-center">
-      <div class="col-md-12">
+    <div class="row mb-4">
+      <div class="col-md-6">
+        <div class="alert alert-info">
+          <strong>Total de Estudiantes:</strong> {{ total_estudiantes }}
+        </div>
+      </div>
+      <div class="col-md-6">
+        <div class="alert alert-info">
+          <strong>Total de Profesores:</strong> {{ total_profesores }}
+        </div>
+      </div>
+    </div>
+    <div class="row">
+      <div class="col-md-12 mb-5">
         <div class="x_panel">
           <div class="x_title">
             <h2>Lista de Estudiantes</h2>
             <div class="clearfix"></div>
           </div>
-          <div class="x_content">
-            <div class="table-responsive">
-              <table class="table table-striped table-bordered align-middle">
-                <thead class="table-dark">
-                  <tr>
-                    <th>Código</th>
-                    <th>Primer Nombre</th>
-                    <th>Segundo Nombre</th>
-                    <th>Apellido Paterno</th>
-                    <th>Apellido Materno</th>
-                    <th>Tipo Documento</th>
-                    <th>Número Documento</th>
-                    <th>Fecha Nacimiento</th>
-                    <th>Género</th>
-                    <th>Email</th>
-                    <th>Fecha Ingreso</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {% for estudiante in estudiantes %}
-                  <tr>
-                    <td>{{ estudiante.codigo_estudiante }}</td>
-                    <td>{{ estudiante.primer_nombre }}</td>
-                    <td>{{ estudiante.segundo_nombre|default:"" }}</td>
-                    <td>{{ estudiante.apellido_paterno }}</td>
-                    <td>{{ estudiante.apellido_materno|default:"" }}</td>
-                    <td>{{ estudiante.get_tipo_documento_display }}</td>
-                    <td>{{ estudiante.numero_documento }}</td>
-                    <td>{{ estudiante.fecha_nacimiento }}</td>
-                    <td>{{ estudiante.get_genero_display }}</td>
-                    <td>{{ estudiante.email }}</td>
-                    <td>{{ estudiante.fecha_ingreso }}</td>
-                  </tr>
-                  {% empty %}
-                  <tr>
-                    <td colspan="11" class="text-center">No hay estudiantes registrados.</td>
-                  </tr>
-                  {% endfor %}
-                </tbody>
-              </table>
-            </div>
+          <div class="x_content table-responsive">
+            <table class="table table-striped table-bordered align-middle">
+              <thead class="table-dark">
+                <tr>
+                  <th>Código</th>
+                  <th>Primer Nombre</th>
+                  <th>Segundo Nombre</th>
+                  <th>Apellido Paterno</th>
+                  <th>Apellido Materno</th>
+                  <th>Tipo Documento</th>
+                  <th>Número Documento</th>
+                  <th>Fecha Nacimiento</th>
+                  <th>Género</th>
+                  <th>Email</th>
+                  <th>Fecha Ingreso</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for estudiante in estudiantes %}
+                <tr>
+                  <td>{{ estudiante.codigo_estudiante }}</td>
+                  <td>{{ estudiante.primer_nombre }}</td>
+                  <td>{{ estudiante.segundo_nombre|default:"" }}</td>
+                  <td>{{ estudiante.apellido_paterno }}</td>
+                  <td>{{ estudiante.apellido_materno|default:"" }}</td>
+                  <td>{{ estudiante.get_tipo_documento_display }}</td>
+                  <td>{{ estudiante.numero_documento }}</td>
+                  <td>{{ estudiante.fecha_nacimiento }}</td>
+                  <td>{{ estudiante.get_genero_display }}</td>
+                  <td>{{ estudiante.email }}</td>
+                  <td>{{ estudiante.fecha_ingreso }}</td>
+                </tr>
+                {% empty %}
+                <tr>
+                  <td colspan="11" class="text-center">No hay estudiantes registrados.</td>
+                </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-12">
+        <div class="x_panel">
+          <div class="x_title">
+            <h2>Lista de Profesores</h2>
+            <div class="clearfix"></div>
+          </div>
+          <div class="x_content table-responsive">
+            <table class="table table-striped table-bordered align-middle">
+              <thead class="table-dark">
+                <tr>
+                  <th>Código</th>
+                  <th>Primer Nombre</th>
+                  <th>Segundo Nombre</th>
+                  <th>Apellido Paterno</th>
+                  <th>Apellido Materno</th>
+                  <th>Tipo Documento</th>
+                  <th>Número Documento</th>
+                  <th>Fecha Nacimiento</th>
+                  <th>Género</th>
+                  <th>Email</th>
+                  <th>Especialidad</th>
+                  <th>Fecha Contratación</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for profesor in profesores %}
+                <tr>
+                  <td>{{ profesor.codigo_profesor }}</td>
+                  <td>{{ profesor.primer_nombre }}</td>
+                  <td>{{ profesor.segundo_nombre|default:"" }}</td>
+                  <td>{{ profesor.apellido_paterno }}</td>
+                  <td>{{ profesor.apellido_materno|default:"" }}</td>
+                  <td>{{ profesor.get_tipo_documento_display }}</td>
+                  <td>{{ profesor.numero_documento }}</td>
+                  <td>{{ profesor.fecha_nacimiento }}</td>
+                  <td>{{ profesor.get_genero_display }}</td>
+                  <td>{{ profesor.email }}</td>
+                  <td>{{ profesor.especialidad }}</td>
+                  <td>{{ profesor.fecha_contratacion }}</td>
+                </tr>
+                {% empty %}
+                <tr>
+                  <td colspan="12" class="text-center">No hay profesores registrados.</td>
+                </tr>
+                {% endfor %}
+              </tbody>
+            </table>
           </div>
         </div>
       </div>

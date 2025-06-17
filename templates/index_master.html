@@ -59,15 +59,35 @@
             <!-- sidebar menu -->
             <div id="sidebar-menu" class="main_menu_side hidden-print main_menu">
               <div class="menu_section">
+                <h3>PÁGINA PRINCIPAL</h3>
+                <ul class="nav side-menu">
+                  <li>
+                    <a href="#"><i class="fa fa-home"></i> Inicio</a>
+                  </li>
+                </ul>
+              </div>
+              <div class="menu_section">
                 <h3>Gestión de Usuarios</h3>
                 <ul class="nav side-menu">
-                  <li><a><i class="fa fa-user"></i> Usuarios <span class="fa fa-chevron-down"></span></a>
-                    <ul class="nav child_menu">
-                      <li><a href="{% url 'agregar' %}">Agregar</a></li>
-                      <li><a href="{% url 'modificar' %}">Modificar</a></li>
-                      <li><a href="{% url 'eliminar' %}">Eliminar</a></li>
-                      <li><a href="{% url 'listar_estudiantes' %}">Listar</a></li>
-                    </ul>
+                  <li>
+                    <a href="{% url 'agregar' %}"><i class="fa fa-plus"></i> Agregar</a>
+                  </li>
+                  <li>
+                    <a href="{% url 'modificar' %}"><i class="fa fa-edit"></i> Modificar</a>
+                  </li>
+                  <li>
+                    <a href="{% url 'eliminar' %}"><i class="fa fa-trash"></i> Eliminar</a>
+                  </li>
+                  <li>
+                    <a href="{% url 'listar_estudiantes' %}"><i class="fa fa-list"></i> Listar</a>
+                  </li>
+                </ul>
+              </div>
+              <div class="menu_section">
+                <h3>Calendario</h3>
+                <ul class="nav side-menu">
+                  <li>
+                    <a href="{% url 'calendario' %}"><i class="fa fa-calendar"></i> Calendario</a>
                   </li>
                 </ul>
               </div>

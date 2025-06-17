@@ -1,0 +1,77 @@
+{% extends "index_master.html" %}
+
+{% block content %}
+<div class="right_col" role="main">
+  <div class="container-fluid">
+    <div class="row justify-content-center">
+      <div class="col-md-8 col-lg-7">
+        <div class="x_panel">
+          <div class="x_title">
+            <h2>Eliminar {{ tipo|title }}</h2>
+            <div class="clearfix"></div>
+          </div>
+          <div class="x_content">
+            <div class="mb-3 text-center">
+              <a href="?tipo=estudiante" class="btn btn-outline-danger btn-sm {% if tipo == 'estudiante' %}active{% endif %}">Estudiante</a>
+              <a href="?tipo=profesor" class="btn btn-outline-danger btn-sm {% if tipo == 'profesor' %}active{% endif %}">Profesor</a>
+            </div>
+            <form method="get" class="row g-2 mb-4">
+              <input type="hidden" name="tipo" value="{{ tipo }}">
+              <div class="col-9">
+                <input type="text" name="q" class="form-control" placeholder="Buscar por nombre, apellido o código..." value="{{ query }}">
+              </div>
+              <div class="col-3">
+                <button type="submit" class="btn btn-danger w-100">Buscar</button>
+              </div>
+            </form>
+            {% if resultados %}
+              <div class="mb-3">
+                <label>Selecciona un {{ tipo }} para eliminar:</label>
+                <ul class="list-group">
+                  {% for obj in resultados %}
+                    <li class="list-group-item d-flex justify-content-between align-items-center {% if obj.id|stringformat:"s" == seleccionado_id %}active{% endif %}">
+                      <span>
+                        {% if tipo == 'estudiante' %}
+                          {{ obj.codigo_estudiante }} - {{ obj.primer_nombre }} {{ obj.apellido_paterno }}
+                        {% else %}
+                          {{ obj.codigo_profesor }} - {{ obj.primer_nombre }} {{ obj.apellido_paterno }}
+                        {% endif %}
+                      </span>
+                      <a href="?tipo={{ tipo }}&q={{ query }}&id={{ obj.id }}" class="btn btn-sm btn-outline-danger">Seleccionar</a>
+                    </li>
+                  {% endfor %}
+                </ul>
+              </div>
+            {% elif query %}
+              <div class="alert alert-warning">No se encontraron resultados.</div>
+            {% endif %}
+            {% if objeto %}
+              <hr>
+              <div class="alert alert-danger">
+                ¿Estás seguro que deseas eliminar este {{ tipo }}?<br>
+                <strong>
+                  {% if tipo == 'estudiante' %}
+                    {{ objeto.codigo_estudiante }} - {{ objeto.primer_nombre }} {{ objeto.apellido_paterno }}
+                  {% else %}
+                    {{ objeto.codigo_profesor }} - {{ objeto.primer_nombre }} {{ objeto.apellido_paterno }}
+                  {% endif %}
+                </strong>
+              </div>
+              <form method="post">
+                {% csrf_token %}
+                <div class="text-center">
+                  <button type="submit" class="btn btn-danger px-4">Eliminar</button>
+                  <a href="?tipo={{ tipo }}&q={{ query }}" class="btn btn-secondary px-4">Cancelar</a>
+                </div>
+              </form>
+            {% endif %}
+            {% if mensaje %}
+              <div class="alert alert-success mt-3">{{ mensaje }}</div>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

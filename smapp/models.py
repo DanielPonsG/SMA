@@ -146,3 +146,18 @@ class Calificacion(models.Model):
     def __str__(self):
         return f"{self.inscripcion.estudiante} - {self.inscripcion.grupo.asignatura.nombre} - {self.nombre_evaluacion}: {self.puntaje}"
 
+class EventoCalendario(models.Model):
+    PRIORIDAD_CHOICES = [
+        ('baja', 'Baja'),
+        ('media', 'Media'),
+        ('alta', 'Alta'),
+    ]
+    titulo = models.CharField(max_length=200)
+    descripcion = models.TextField(blank=True, null=True)
+    fecha = models.DateField()
+    prioridad = models.CharField(max_length=10, choices=PRIORIDAD_CHOICES, default='media')
+    creado_en = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"{self.titulo} ({self.fecha})"
+
