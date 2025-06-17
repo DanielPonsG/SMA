@@ -1,0 +1,17 @@
+<!-- filepath: c:\Users\Danie\Desktop\Proyecto_Titulo\sma\templates\eliminar_asignatura.html -->
+{% extends "index_master.html" %}
+{% block content %}
+<div class="right_col" role="main">
+  <div class="container-fluid">
+    <h2>Eliminar Asignatura</h2>
+    <div class="alert alert-danger">
+      ¿Estás seguro que deseas eliminar la asignatura <strong>{{ asignatura.nombre }}</strong>?
+    </div>
+    <form method="post">
+      {% csrf_token %}
+      <button type="submit" class="btn btn-danger">Eliminar</button>
+      <a href="{% url 'listar_asignaturas' %}" class="btn btn-secondary">Cancelar</a>
+    </form>
+  </div>
+</div>
+{% endblock %}

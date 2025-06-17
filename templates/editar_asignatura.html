@@ -1,0 +1,18 @@
+<!-- filepath: c:\Users\Danie\Desktop\Proyecto_Titulo\sma\templates\editar_asignatura.html -->
+{% extends "index_master.html" %}
+{% block content %}
+<div class="right_col" role="main">
+  <div class="container-fluid">
+    <h2>Editar Asignatura: {{ asignatura.nombre }}</h2>
+    {% if mensaje %}
+      <div class="alert alert-success">{{ mensaje }}</div>
+    {% endif %}
+    <form method="post">
+      {% csrf_token %}
+      {{ form.as_p }}
+      <button type="submit" class="btn btn-success">Guardar Cambios</button>
+      <a href="{% url 'listar_asignaturas' %}" class="btn btn-secondary">Cancelar</a>
+    </form>
+  </div>
+</div>
+{% endblock %}

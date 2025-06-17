@@ -1,4 +1,3 @@
-
 {% extends "index_master.html" %}
 
 {% block content %}
@@ -38,6 +37,7 @@
                   <th>Género</th>
                   <th>Email</th>
                   <th>Fecha Ingreso</th>
+                  <th>Usuario</th>
                 </tr>
               </thead>
               <tbody>
@@ -54,10 +54,11 @@
                   <td>{{ estudiante.get_genero_display }}</td>
                   <td>{{ estudiante.email }}</td>
                   <td>{{ estudiante.fecha_ingreso }}</td>
+                  <td>{{ estudiante.user.username }}</td>
                 </tr>
                 {% empty %}
                 <tr>
-                  <td colspan="11" class="text-center">No hay estudiantes registrados.</td>
+                  <td colspan="12" class="text-center">No hay estudiantes registrados.</td>
                 </tr>
                 {% endfor %}
               </tbody>

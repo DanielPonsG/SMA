@@ -1,0 +1,58 @@
+<!-- filepath: c:\Users\Danie\Desktop\Proyecto_Titulo\sma\templates\gestionar_horarios.html -->
+{% extends "index_master.html" %}
+{% block content %}
+<div class="right_col" role="main">
+  <div class="container-fluid">
+    <h2>Horarios de {{ curso.nombre }}</h2>
+    {% if mensaje %}
+      <div class="alert alert-success">{{ mensaje }}</div>
+    {% endif %}
+    <form method="post" class="mb-4">
+      {% csrf_token %}
+      {{ form.as_p }}
+      <button type="submit" class="btn btn-success">Agregar Horario</button>
+    </form>
+    <table class="table table-bordered">
+      <thead>
+        <tr>
+          <th>Día</th>
+          <th>Hora Inicio</th>
+          <th>Hora Fin</th>
+          <th>Asignatura</th>
+          <th>Profesor</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for horario in horarios %}
+        <tr>
+          <td>{{ horario.get_dia_display }}</td>
+          <td>{{ horario.hora_inicio }}</td>
+          <td>{{ horario.hora_fin }}</td>
+          <td>
+            {% if curso.asignaturas.all %}
+              {% for asignatura in curso.asignaturas.all %}
+                {{ asignatura.nombre }}{% if not forloop.last %}, {% endif %}
+              {% endfor %}
+            {% else %}
+              Sin asignaturas
+            {% endif %}
+          </td>
+          <td>
+            {% if curso.profesor_responsable %}
+              {{ curso.profesor_responsable }}
+            {% else %}
+              Sin profesor
+            {% endif %}
+          </td>
+        </tr>
+        {% empty %}
+        <tr>
+          <td colspan="5" class="text-center">No hay horarios registrados.</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    <a href="{% url 'listar_cursos' %}" class="btn btn-secondary">Volver a Cursos</a>
+  </div>
+</div>
+{% endblock %}

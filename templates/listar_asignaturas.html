@@ -1,0 +1,52 @@
+<!-- filepath: c:\Users\Danie\Desktop\Proyecto_Titulo\sma\templates\listar_asignaturas.html -->
+{% extends "index_master.html" %}
+{% block content %}
+<div class="right_col" role="main">
+  <div class="container-fluid">
+    <h2>Mis Asignaturas</h2>
+    <table class="table table-bordered">
+      <thead>
+        <tr>
+          <th>Nombre</th>
+          <th>Código</th>
+          <th>Profesor Responsable</th>
+          <th>Descripción</th>
+          <th>Horarios</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for asignatura in asignaturas %}
+        <tr>
+          <td>{{ asignatura.nombre }}</td>
+          <td>{{ asignatura.codigo_asignatura }}</td>
+          <td>{{ asignatura.profesor_responsable }}</td>
+          <td>{{ asignatura.descripcion }}</td>
+          <td>
+            {% if asignatura.horarios.exists %}
+              <ul class="mb-0">
+                {% for horario in asignatura.horarios.all %}
+                  <li>
+                    {{ horario.get_dia_display }}: {{ horario.hora_inicio|time:"H:i" }} - {{ horario.hora_fin|time:"H:i" }}
+                    {% if horario.curso %}
+                      (Curso: {{ horario.curso.nombre }})
+                    {% endif %}
+                  </li>
+                {% empty %}
+                  <li>Sin horarios</li>
+                {% endfor %}
+              </ul>
+            {% else %}
+              Sin horarios
+            {% endif %}
+          </td>
+        </tr>
+        {% empty %}
+        <tr>
+          <td colspan="5" class="text-center">No tienes asignaturas registradas.</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

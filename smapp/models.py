@@ -1,4 +1,5 @@
 from django.db import models
+from django.contrib.auth.models import User
 
 # Create your models here.
 class Persona(models.Model):
@@ -37,6 +38,7 @@ class Estudiante(Persona):
     """
     codigo_estudiante = models.CharField(max_length=20, unique=True)
     fecha_ingreso = models.DateField(auto_now_add=True) # Se establece automáticamente al crear
+    user = models.OneToOneField(User, on_delete=models.CASCADE, null=True, blank=True)
 
     def __str__(self):
         return f"{self.codigo_estudiante} - {self.primer_nombre} {self.apellido_paterno}"
@@ -48,6 +50,7 @@ class Profesor(Persona):
     codigo_profesor = models.CharField(max_length=20, unique=True)
     especialidad = models.CharField(max_length=100)
     fecha_contratacion = models.DateField(auto_now_add=True)
+    user = models.OneToOneField(User, on_delete=models.CASCADE, null=True, blank=True)
 
     def __str__(self):
         return f"{self.codigo_profesor} - {self.primer_nombre} {self.apellido_paterno}"
@@ -59,6 +62,9 @@ class Curso(models.Model):
     nombre = models.CharField(max_length=100, unique=True)
     descripcion = models.TextField(blank=True, null=True)
     codigo_curso = models.CharField(max_length=10, unique=True)
+    profesor_responsable = models.ForeignKey('Profesor', on_delete=models.SET_NULL, null=True, blank=True, related_name='cursos')
+    estudiantes = models.ManyToManyField('Estudiante', blank=True, related_name='cursos')
+    asignaturas = models.ManyToManyField('Asignatura', blank=True, related_name='cursos')
 
     def __str__(self):
         return self.nombre
@@ -75,6 +81,7 @@ class Asignatura(models.Model):
     nombre = models.CharField(max_length=100)
     codigo_asignatura = models.CharField(max_length=10, unique=True)
     descripcion = models.TextField(blank=True, null=True)
+    profesor_responsable = models.ForeignKey('Profesor', on_delete=models.SET_NULL, null=True, blank=True, related_name='asignaturas')
 
     def __str__(self):
         return self.nombre
@@ -160,4 +167,35 @@ class EventoCalendario(models.Model):
 
     def __str__(self):
         return f"{self.titulo} ({self.fecha})"
+
+class HorarioCurso(models.Model):
+    DIAS_SEMANA = [
+        ('LU', 'Lunes'),
+        ('MA', 'Martes'),
+        ('MI', 'Miércoles'),
+        ('JU', 'Jueves'),
+        ('VI', 'Viernes'),
+        ('SA', 'Sábado'),
+        ('DO', 'Domingo'),
+    ]
+    curso = models.ForeignKey(Curso, on_delete=models.CASCADE, related_name='horarios')
+    asignatura = models.ForeignKey(Asignatura, on_delete=models.CASCADE, related_name='horarios', null=True, blank=True)  # <-- AGREGAR ESTA LÍNEA
+    dia = models.CharField(max_length=2, choices=DIAS_SEMANA)
+    hora_inicio = models.TimeField()
+    hora_fin = models.TimeField()
+
+    def __str__(self):
+        return f"{self.get_dia_display()} {self.hora_inicio} - {self.hora_fin} ({self.curso.nombre})"
+
+class Perfil(models.Model):
+    TIPOS_USUARIO = [
+        ('director', 'Director'),
+        ('profesor', 'Profesor'),
+        ('alumno', 'Alumno'),
+    ]
+    user = models.OneToOneField(User, on_delete=models.CASCADE)
+    tipo_usuario = models.CharField(max_length=10, choices=TIPOS_USUARIO)
+
+    def __str__(self):
+        return f"{self.user.username} ({self.get_tipo_usuario_display()})"
 

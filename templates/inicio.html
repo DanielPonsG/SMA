@@ -1,0 +1,16 @@
+<!-- filepath: c:\Users\Danie\Desktop\Proyecto_Titulo\sma\templates\inicio.html -->
+{% extends "index_master.html" %}
+{% block content %}
+<div class="right_col" role="main">
+  <div class="container-fluid">
+    <div class="row justify-content-center">
+      <div class="col-md-8">
+        <div class="alert alert-success mt-5 text-center">
+          <h2>¡Bienvenido, {{ user.username }}!</h2>
+          <p>Tipo de usuario: <strong>{{ user.perfil.get_tipo_usuario_display }}</strong></p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

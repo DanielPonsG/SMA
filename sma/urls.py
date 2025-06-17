@@ -16,13 +16,14 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path
-from smapp.views import index_master, index, agregar, modificar, eliminar, listar_estudiantes, calendario, editar_evento, eliminar_evento
+from smapp.views import index_master, index, agregar, modificar, eliminar, listar_estudiantes, calendario, editar_evento, eliminar_evento, listar_cursos, agregar_curso, editar_curso, eliminar_curso, gestionar_horarios, listar_asignaturas, agregar_asignatura, editar_asignatura, eliminar_asignatura, login_view, inicio, logout_view, mis_horarios, mi_curso
 
 
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('index_master', index_master, name='index_master'),
-    path('', index, name='index'),
+    path('login/', login_view, name='login'),
+    path('', inicio, name='inicio'),
     # CRUD de Administrador
     path('agregar', agregar, name='agregar'),
     path('modificar', modificar, name='modificar'),
@@ -31,4 +32,16 @@ urlpatterns = [
     path('calendario/', calendario, name='calendario'),
     path('calendario/editar/<int:evento_id>/', editar_evento, name='editar_evento'),
     path('calendario/eliminar/<int:evento_id>/', eliminar_evento, name='eliminar_evento'),
+    path('cursos/', listar_cursos, name='listar_cursos'),
+    path('cursos/agregar/', agregar_curso, name='agregar_curso'),
+    path('cursos/editar/<int:curso_id>/', editar_curso, name='editar_curso'),
+    path('cursos/eliminar/<int:curso_id>/', eliminar_curso, name='eliminar_curso'),
+    path('cursos/<int:curso_id>/horarios/', gestionar_horarios, name='gestionar_horarios'),
+    path('asignaturas/', listar_asignaturas, name='listar_asignaturas'),
+    path('asignaturas/agregar/', agregar_asignatura, name='agregar_asignatura'),
+    path('asignaturas/editar/<int:asignatura_id>/', editar_asignatura, name='editar_asignatura'),
+    path('asignaturas/eliminar/<int:asignatura_id>/', eliminar_asignatura, name='eliminar_asignatura'),
+    path('logout/', logout_view, name='logout'),
+    path('mis-horarios/', mis_horarios, name='mis_horarios'),
+    path('mi-curso/', mi_curso, name='mi_curso'),
 ]

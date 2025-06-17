@@ -5,7 +5,7 @@
 <div class="right_col" role="main">
   <div class="container-fluid">
     <div class="row justify-content-center">
-      <div class="col-md-10 col-lg-12">
+      <div class="col-md-10 col-lg-9">
         <div class="x_panel">
           <div class="x_title">
             <h2>Calendario de Eventos</h2>
@@ -13,7 +13,8 @@
           </div>
           <div class="x_content">
 
-            <!-- Formulario para agregar evento -->
+            <!-- Formulario para agregar evento (solo director/profesor) -->
+            {% if user.is_authenticated and user.perfil.tipo_usuario in 'director profesor' %}
             <div class="card mb-4 shadow-sm">
               <div class="card-header bg-success text-white">
                 <strong>Agregar nuevo evento</strong>
@@ -36,12 +37,13 @@
                   <div class="col-md-12">
                     {{ form.descripcion.label_tag }} {{ form.descripcion }}
                   </div>
-                  <div class="col-12 text-center">
+                  <div class="col-12 text-end">
                     <button type="submit" class="btn btn-success">Agregar Evento</button>
                   </div>
                 </form>
               </div>
             </div>
+            {% endif %}
 
             <!-- Filtros -->
             <div class="card mb-4">
@@ -85,7 +87,9 @@
                         <th>Título</th>
                         <th>Descripción</th>
                         <th>Prioridad</th>
-                        <th style="width:120px;">Acciones</th>
+                        {% if user.is_authenticated and user.perfil.tipo_usuario in 'director profesor' %}
+                          <th style="width:120px;">Acciones</th>
+                        {% endif %}
                       </tr>
                     </thead>
                     <tbody>
@@ -103,14 +107,16 @@
                             <span class="badge bg-info text-dark">Baja</span>
                           {% endif %}
                         </td>
+                        {% if user.is_authenticated and user.perfil.tipo_usuario in 'director profesor' %}
                         <td>
                           <a href="{% url 'editar_evento' evento.id %}" class="btn btn-sm btn-outline-primary">Editar</a>
                           <a href="{% url 'eliminar_evento' evento.id %}" class="btn btn-sm btn-outline-danger">Eliminar</a>
                         </td>
+                        {% endif %}
                       </tr>
                       {% empty %}
                       <tr>
-                        <td colspan="5" class="text-center">No hay eventos registrados.</td>
+                        <td colspan="{% if user.is_authenticated and user.perfil.tipo_usuario in 'director profesor' %}5{% else %}4{% endif %}" class="text-center">No hay eventos registrados.</td>
                       </tr>
                       {% endfor %}
                     </tbody>
