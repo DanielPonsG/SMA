@@ -1,0 +1,32 @@
+{% extends "index_master.html" %}
+
+{% block content %}
+<div class="right_col" role="main">
+  <div class="container-fluid">
+    <div class="row justify-content-center">
+      <div class="col-md-12">
+        <div class="x_panel">
+          <div class="x_title">
+            <h2>Agregar {{ tipo|title }}</h2>
+            <div class="clearfix"></div>
+          </div>
+          <div class="x_content">
+            <div class="mb-3">
+              <a href="?tipo=estudiante" class="btn btn-primary {% if tipo == 'estudiante' %}active{% endif %}">Estudiante</a>
+              <a href="?tipo=profesor" class="btn btn-primary {% if tipo == 'profesor' %}active{% endif %}">Profesor</a>
+            </div>
+            {% if mensaje %}
+              <div class="alert alert-success">{{ mensaje }}</div>
+            {% endif %}
+            <form method="post" novalidate>
+              {% csrf_token %}
+              {{ form.as_p }}
+              <button type="submit" class="btn btn-success">Agregar</button>
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

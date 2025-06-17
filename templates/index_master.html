@@ -63,10 +63,10 @@
                 <ul class="nav side-menu">
                   <li><a><i class="fa fa-user"></i> Usuarios <span class="fa fa-chevron-down"></span></a>
                     <ul class="nav child_menu">
-                      <li><a href="index.html">Agregar</a></li>
-                      <li><a href="index2.html">Modificar</a></li>
-                      <li><a href="index3.html">Eliminar</a></li>
-                      <li><a href="index4.html">Listar</a></li>
+                      <li><a href="{% url 'agregar' %}">Agregar</a></li>
+                      <li><a href="{% url 'modificar' %}">Modificar</a></li>
+                      <li><a href="{% url 'eliminar' %}">Eliminar</a></li>
+                      <li><a href="{% url 'listar_estudiantes' %}">Listar</a></li>
                     </ul>
                   </li>
                 </ul>

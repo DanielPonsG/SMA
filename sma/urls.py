@@ -16,10 +16,17 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path
-from smapp.views import index_master, index
+from smapp.views import index_master, index, agregar, modificar, eliminar, listar_estudiantes
+
 
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('index_master', index_master, name='index_master'),
     path('', index, name='index'),
+    # CRUD de Administrador
+    path('agregar', agregar, name='agregar'),
+    path('modificar', modificar, name='modificar'),
+    path('eliminar', eliminar, name='eliminar'),
+    path('estudiantes/listar/', listar_estudiantes, name='listar_estudiantes'),
+
 ]
