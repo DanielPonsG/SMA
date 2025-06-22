@@ -1,0 +1,62 @@
+<!-- filepath: c:\Users\Danie\Desktop\Proyecto_Titulo\sma\templates\ingresar_notas.html -->
+{% extends "index_master.html" %}
+{% block content %}
+<div class="right_col" role="main">
+  <div class="container-fluid">
+    <h2>Ingresar Notas</h2>
+    {% if mensaje %}
+      <div class="alert alert-success">{{ mensaje }}</div>
+    {% endif %}
+    <form method="get" id="seleccion-form">
+      {{ seleccion_form.curso.label_tag }} {{ seleccion_form.curso }}
+      {{ seleccion_form.asignatura.label_tag }} {{ seleccion_form.asignatura }}
+      {{ seleccion_form.periodo.label_tag }} {{ seleccion_form.periodo }}
+    </form>
+    <script>
+    document.getElementById("id_curso").onchange = function() {
+      document.getElementById("seleccion-form").submit();
+    };
+    document.getElementById("id_asignatura").onchange = function() {
+      document.getElementById("seleccion-form").submit();
+    };
+    document.getElementById("id_periodo").onchange = function() {
+      document.getElementById("seleccion-form").submit();
+    };
+    </script>
+    {% if curso_id and asignatura_id %}
+    <form method="post">
+      {% csrf_token %}
+      {{ seleccion_form.alumno.label_tag }} {{ seleccion_form.alumno }}
+      <h4>Notas</h4>
+      {{ formset.management_form }}
+      {% for form in formset %}
+        <div class="card mb-2 p-2">
+          {{ form.as_p }}
+        </div>
+      {% endfor %}
+      <input type="hidden" name="curso" value="{{ curso_id }}">
+      <input type="hidden" name="asignatura" value="{{ asignatura_id }}">
+      <input type="hidden" name="periodo" value="{{ periodo_id }}">
+      <button type="submit" class="btn btn-success">Guardar Notas</button>
+    </form>
+    {% endif %}
+    {% if seleccion_form.errors %}
+      <div class="alert alert-danger">
+        {{ seleccion_form.errors }}
+      </div>
+    {% endif %}
+    {% if formset.non_form_errors %}
+      <div class="alert alert-danger">
+        {{ formset.non_form_errors }}
+      </div>
+    {% endif %}
+    {% for form in formset %}
+      {% if form.errors %}
+        <div class="alert alert-danger">
+          {{ form.errors }}
+        </div>
+      {% endif %}
+    {% endfor %}
+  </div>
+</div>
+{% endblock %}

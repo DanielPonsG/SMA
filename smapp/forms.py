@@ -1,5 +1,5 @@
 from django import forms
-from .models import Estudiante, Profesor, EventoCalendario, Curso, HorarioCurso, Asignatura
+from .models import Estudiante, Profesor, EventoCalendario, Curso, HorarioCurso, Asignatura, Inscripcion, Calificacion, Grupo, PeriodoAcademico
 
 class EstudianteForm(forms.ModelForm):
     username = forms.CharField(label="Nombre de usuario")
@@ -51,3 +51,54 @@ class AsignaturaForm(forms.ModelForm):
     class Meta:
         model = Asignatura
         fields = ['nombre', 'codigo_asignatura', 'descripcion', 'profesor_responsable']
+
+class AsignaturaCompletaForm(forms.ModelForm):
+    profesor_responsable = forms.ModelChoiceField(queryset=Profesor.objects.all(), label="Profesor responsable")
+    cursos = forms.ModelMultipleChoiceField(queryset=Curso.objects.all(), label="Cursos", required=True)
+    dia = forms.ChoiceField(choices=HorarioCurso.DIAS_SEMANA, label="Día")
+    hora_inicio = forms.TimeField(widget=forms.TimeInput(attrs={'type': 'time'}), label="Hora inicio")
+    hora_fin = forms.TimeField(widget=forms.TimeInput(attrs={'type': 'time'}), label="Hora fin")
+
+    class Meta:
+        model = Asignatura
+        fields = ['nombre', 'codigo_asignatura', 'descripcion', 'profesor_responsable', 'cursos', 'dia', 'hora_inicio', 'hora_fin']
+
+class SeleccionCursoAlumnoForm(forms.Form):
+    curso = forms.ModelChoiceField(queryset=Curso.objects.all(), label="Curso")
+    asignatura = forms.ModelChoiceField(queryset=Asignatura.objects.none(), label="Asignatura", required=False)
+    periodo = forms.ModelChoiceField(
+        queryset=PeriodoAcademico.objects.filter(
+            nombre__in=["Semestre 1", "Semestre 2"], activo=True
+        ),
+        label="Periodo académico",
+        required=True
+    )
+    alumno = forms.ModelChoiceField(queryset=Estudiante.objects.none(), label="Alumno", required=False)
+
+    def __init__(self, *args, **kwargs):
+        curso_id = kwargs.pop('curso_id', None)
+        asignatura_id = kwargs.pop('asignatura_id', None)
+        periodo_id = kwargs.pop('periodo_id', None)
+        super().__init__(*args, **kwargs)
+        if curso_id:
+            self.fields['curso'].initial = curso_id
+            self.fields['asignatura'].queryset = Asignatura.objects.filter(cursos__id=curso_id)
+            self.fields['alumno'].queryset = Estudiante.objects.filter(cursos__id=curso_id)
+        else:
+            self.fields['asignatura'].queryset = Asignatura.objects.none()
+            self.fields['alumno'].queryset = Estudiante.objects.none()
+        if asignatura_id:
+            self.fields['asignatura'].initial = asignatura_id
+        if periodo_id:
+            self.fields['periodo'].initial = periodo_id
+
+class CalificacionForm(forms.Form):
+    nombre_evaluacion = forms.CharField(label="Nombre de la evaluación")
+    puntaje = forms.DecimalField(
+        label="Puntaje", max_digits=3, decimal_places=1,
+        min_value=1.0, max_value=7.0,
+        help_text="Ingrese una nota entre 1,0 y 7,0"
+    )
+    porcentaje = forms.DecimalField(label="Porcentaje", max_digits=5, decimal_places=2)
+    detalle = forms.CharField(label="Detalle", max_length=255, required=False)
+    descripcion = forms.CharField(label="Descripción", widget=forms.Textarea, required=False)

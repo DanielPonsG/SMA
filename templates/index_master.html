@@ -130,6 +130,9 @@
                     <li>
                       <a href="{% url 'listar_estudiantes' %}"><i class="fa fa-list"></i> Listar</a>
                     </li>
+                    <li>
+                      <a href="{% url 'agregar_asignatura_completa' %}"><i class="fa fa-plus"></i> Agregar Asignatura Completa</a>
+                    </li>
                   </ul>
                 </div>
                 <div class="menu_section">
@@ -148,6 +151,21 @@
                     </li>
                     <li>
                       <a href="{% url 'listar_asignaturas' %}"><i class="fa fa-book"></i> Asignaturas</a>
+                    </li>
+                    <li>
+                      <a href="{% url 'ver_horario_curso' %}"><i class="fa fa-calendar"></i> Ver Horario de Curso</a>
+                    </li>
+                    
+                  </ul>
+                </div>
+                <div class="menu_section">
+                  <h3>Notas</h3>
+                  <ul class="nav side-menu">
+                    <li>
+                      <a href="{% url 'ingresar_notas' %}"><i class="fa fa-pencil"></i> Ingresar Notas</a>
+                    </li>
+                    <li>
+                      <a href="{% url 'ver_notas_curso' %}"><i class="fa fa-list"></i> Ver Notas</a>
                     </li>
                   </ul>
                 </div>

@@ -1,0 +1,55 @@
+<!-- filepath: c:\Users\Danie\Desktop\Proyecto_Titulo\sma\templates\ver_notas_curso.html -->
+{% extends "index_master.html" %}
+{% block content %}
+<div class="right_col" role="main">
+  <div class="container-fluid">
+    <h2>Notas por Curso</h2>
+    <form method="get" class="mb-3">
+      <label for="curso">Selecciona un curso:</label>
+      <select name="curso" id="curso" class="form-control" style="width:auto;display:inline-block;" onchange="this.form.submit()">
+        <option value="">-- Selecciona --</option>
+        {% for curso in cursos %}
+          <option value="{{ curso.id }}" {% if curso_seleccionado and curso.id == curso_seleccionado.id %}selected{% endif %}>
+            {{ curso.nombre }}
+          </option>
+        {% endfor %}
+      </select>
+    </form>
+    {% if curso_seleccionado %}
+      <h4>Notas del curso: {{ curso_seleccionado.nombre }}</h4>
+      <table class="table table-bordered">
+        <thead>
+          <tr>
+            <th>Alumno</th>
+            <th>Asignatura</th>
+            <th>Evaluación</th>
+            <th>Puntaje</th>
+            <th>Porcentaje</th>
+            <th>Detalle</th>
+            <th>Descripción</th>
+            <th>Periodo Académico</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for cal in calificaciones %}
+          <tr>
+            <td>{{ cal.inscripcion.estudiante.primer_nombre }} {{ cal.inscripcion.estudiante.apellido_paterno }}</td>
+            <td>{{ cal.inscripcion.grupo.asignatura.nombre }}</td>
+            <td>{{ cal.nombre_evaluacion }}</td>
+            <td>{{ cal.puntaje }}</td>
+            <td>{{ cal.porcentaje }}%</td>
+            <td>{{ cal.detalle }}</td>
+            <td>{{ cal.descripcion }}</td>
+            <td>{{ cal.inscripcion.grupo.periodo_academico.nombre }}</td>
+          </tr>
+          {% empty %}
+          <tr>
+            <td colspan="8" class="text-center">No hay notas registradas para este curso.</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

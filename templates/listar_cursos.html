@@ -30,7 +30,15 @@
           <td>{{ curso.nombre }}</td>
           <td>{{ curso.codigo_curso }}</td>
           <td>{{ curso.profesor_responsable }}</td>
-          <td>{{ curso.estudiantes.count }}</td>
+          <td>
+            {{ curso.estudiantes.count }}
+            {% if curso.estudiantes.count > 0 %}
+              <button class="btn btn-link btn-sm" type="button"
+                      onclick="toggleAlumnos('alumnos-{{ curso.id }}', this)">
+                Ver alumnos
+              </button>
+            {% endif %}
+          </td>
           <td>{{ curso.asignaturas.count }}</td>
           <td>
             <a href="{% url 'gestionar_horarios' curso.id %}" class="btn btn-info btn-sm">Ver</a>
@@ -40,6 +48,20 @@
             <a href="{% url 'eliminar_curso' curso.id %}" class="btn btn-danger btn-sm">Eliminar</a>
           </td>
         </tr>
+        {% if curso.estudiantes.count > 0 %}
+        <tr id="alumnos-{{ curso.id }}" style="display:none;">
+          <td colspan="7" style="background: #f9f9f9; padding:0;">
+            <div class="p-3">
+              <strong>Alumnos:</strong>
+              <ul class="mb-0">
+                {% for alumno in curso.estudiantes.all %}
+                  <li>{{ alumno.primer_nombre }} {{ alumno.apellido_paterno }}</li>
+                {% endfor %}
+              </ul>
+            </div>
+          </td>
+        </tr>
+        {% endif %}
         {% empty %}
         <tr>
           <td colspan="7" class="text-center">No hay cursos registrados.</td>
@@ -49,4 +71,16 @@
     </table>
   </div>
 </div>
+<script>
+function toggleAlumnos(id, btn) {
+  var fila = document.getElementById(id);
+  if (fila.style.display === "none") {
+    fila.style.display = "";
+    btn.textContent = "Ocultar alumnos";
+  } else {
+    fila.style.display = "none";
+    btn.textContent = "Ver alumnos";
+  }
+}
+</script>
 {% endblock %}

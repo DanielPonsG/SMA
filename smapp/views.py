@@ -1,6 +1,6 @@
 from django.shortcuts import render, get_object_or_404, redirect
 from .models import Estudiante, Profesor, EventoCalendario, Curso, HorarioCurso, Asignatura
-from .forms import EstudianteForm, ProfesorForm, EventoCalendarioForm, CursoForm, HorarioCursoForm, AsignaturaForm
+from .forms import EstudianteForm, ProfesorForm, EventoCalendarioForm, CursoForm, HorarioCursoForm, AsignaturaForm, AsignaturaCompletaForm
 from django.db import models
 from django.db.models import Q
 from django.contrib.auth import authenticate, login, logout
@@ -8,6 +8,9 @@ from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User
 from .models import Perfil
 from django.http import HttpResponseForbidden
+from django.forms import formset_factory
+from .forms import SeleccionCursoAlumnoForm, CalificacionForm
+from .models import Inscripcion, Grupo, Calificacion
 
 # Create your views here.
 # Vista de la página de inicio del maestro
@@ -41,6 +44,9 @@ def agregar(request):
             profesor = form.save(commit=False)
             profesor.user = user
             profesor.save()
+            # Si tienes campos ManyToMany (como asignaturas), asígnalos después de save()
+            if 'asignaturas' in form.cleaned_data:
+                profesor.asignaturas.set(form.cleaned_data['asignaturas'])
             mensaje = "Profesor agregado correctamente."
             form = ProfesorForm()  # Limpiar formulario
     else:
@@ -57,6 +63,9 @@ def agregar(request):
             estudiante = form.save(commit=False)
             estudiante.user = user
             estudiante.save()
+            # Si tienes campos ManyToMany (como cursos), asígnalos después de save()
+            if 'cursos' in form.cleaned_data:
+                estudiante.cursos.set(form.cleaned_data['cursos'])
             mensaje = "Estudiante agregado correctamente."
             form = EstudianteForm()  # Limpiar formulario
     return render(request, 'agregar.html', {'form': form, 'tipo': tipo, 'mensaje': mensaje})
@@ -472,8 +481,11 @@ def agregar_alumno(request):
             username = form.cleaned_data['username']
             password = form.cleaned_data['password']
             email = form.cleaned_data['email']
+            # Crea el usuario
             user = User.objects.create_user(username=username, password=password, email=email)
+            # Crea el perfil
             Perfil.objects.create(user=user, tipo_usuario='alumno')
+            # Crea el estudiante y lo asocia al usuario
             estudiante = form.save(commit=False)
             estudiante.user = user
             estudiante.save()
@@ -501,6 +513,131 @@ def agregar_profesor(request):
     else:
         form = ProfesorForm()
     return render(request, 'agregar_profesor.html', {'form': form, 'mensaje': mensaje})
+
+from django.contrib.auth.decorators import login_required
+from .models import Curso, HorarioCurso
+
+@login_required
+def ver_horario_curso(request):
+    cursos = Curso.objects.all()
+    curso_seleccionado = None
+    horarios = []
+    if request.method == "POST":
+        curso_id = request.POST.get("curso_id")
+        if curso_id:
+            curso_seleccionado = Curso.objects.get(id=curso_id)
+            horarios = HorarioCurso.objects.filter(curso=curso_seleccionado).select_related('asignatura')
+    return render(request, "ver_horario_curso.html", {
+        "cursos": cursos,
+        "curso_seleccionado": curso_seleccionado,
+        "horarios": horarios,
+    })
+
+@login_required
+def agregar_asignatura_completa(request):
+    if not hasattr(request.user, 'perfil') or request.user.perfil.tipo_usuario != 'director':
+        return HttpResponseForbidden("No tienes permiso para acceder aquí.")
+    mensaje = ""
+    if request.method == 'POST':
+        form = AsignaturaCompletaForm(request.POST)
+        if form.is_valid():
+            asignatura = form.save(commit=False)
+            asignatura.profesor_responsable = form.cleaned_data['profesor_responsable']
+            asignatura.save()
+            # Asignar a cursos seleccionados
+            cursos = form.cleaned_data['cursos']
+            for curso in cursos:
+                curso.asignaturas.add(asignatura)
+                # Crear el horario para cada curso
+                HorarioCurso.objects.create(
+                    curso=curso,
+                    asignatura=asignatura,
+                    dia=form.cleaned_data['dia'],
+                    hora_inicio=form.cleaned_data['hora_inicio'],
+                    hora_fin=form.cleaned_data['hora_fin']
+                )
+            mensaje = "Asignatura agregada correctamente con horario y profesor."
+            form = AsignaturaCompletaForm()
+    else:
+        form = AsignaturaCompletaForm()
+    return render(request, 'agregar_asignatura_completa.html', {'form': form, 'mensaje': mensaje})
+
+@login_required
+def ingresar_notas(request):
+    mensaje = ""
+    curso_id = request.GET.get('curso') or request.POST.get('curso')
+    asignatura_id = request.GET.get('asignatura') or request.POST.get('asignatura')
+    periodo_id = request.GET.get('periodo') or request.POST.get('periodo')
+    SeleccionForm = SeleccionCursoAlumnoForm
+    CalificacionFormSet = formset_factory(CalificacionForm, extra=1)
+
+    if request.method == "POST":
+        seleccion_form = SeleccionForm(request.POST, curso_id=curso_id, asignatura_id=asignatura_id, periodo_id=periodo_id)
+        formset = CalificacionFormSet(request.POST)
+        if seleccion_form.is_valid() and formset.is_valid():
+            curso = seleccion_form.cleaned_data['curso']
+            asignatura = seleccion_form.cleaned_data['asignatura']
+            alumno = seleccion_form.cleaned_data['alumno']
+            periodo = seleccion_form.cleaned_data['periodo']
+            # Buscar o crear grupo para la asignatura, curso y periodo académico
+            grupo = Grupo.objects.filter(asignatura=asignatura, estudiantes=alumno, periodo_academico=periodo).first()
+            if not grupo:
+                grupo = Grupo.objects.create(
+                    asignatura=asignatura,
+                    profesor=asignatura.profesor_responsable,
+                    periodo_academico=periodo,
+                    capacidad_maxima=30
+                )
+                grupo.estudiantes.add(alumno)
+            inscripcion, created = Inscripcion.objects.get_or_create(grupo=grupo, estudiante=alumno)
+            for form in formset:
+                if form.cleaned_data:
+                    Calificacion.objects.create(
+                        inscripcion=inscripcion,
+                        nombre_evaluacion=form.cleaned_data['nombre_evaluacion'],
+                        puntaje=form.cleaned_data['puntaje'],
+                        porcentaje=form.cleaned_data['porcentaje'],
+                        detalle=form.cleaned_data['detalle'],
+                        descripcion=form.cleaned_data['descripcion'],
+                    )
+            mensaje = "Notas guardadas correctamente."
+            formset = CalificacionFormSet()
+    else:
+        seleccion_form = SeleccionForm(
+            curso_id=curso_id,
+            asignatura_id=asignatura_id,
+            periodo_id=periodo_id
+        )
+        formset = CalificacionFormSet()
+    return render(request, "ingresar_notas.html", {
+        "seleccion_form": seleccion_form,
+        "formset": formset,
+        "mensaje": mensaje,
+        "curso_id": curso_id,
+        "asignatura_id": asignatura_id,
+        "periodo_id": periodo_id,
+    })
+
+@login_required
+def ver_notas_curso(request):
+    cursos = Curso.objects.all()
+    curso_id = request.GET.get('curso')
+    calificaciones = []
+    curso_seleccionado = None
+    if curso_id:
+        curso_seleccionado = Curso.objects.get(id=curso_id)
+        # Buscar todas las calificaciones de los alumnos de este curso
+        calificaciones = Calificacion.objects.filter(
+            inscripcion__grupo__asignatura__cursos=curso_seleccionado
+        ).select_related(
+            'inscripcion__estudiante',
+            'inscripcion__grupo__asignatura'
+        ).order_by('inscripcion__estudiante__apellido_paterno', 'inscripcion__grupo__asignatura__nombre')
+    return render(request, "ver_notas_curso.html", {
+        "cursos": cursos,
+        "curso_seleccionado": curso_seleccionado,
+        "calificaciones": calificaciones,
+    })
 
 
 

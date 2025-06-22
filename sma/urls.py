@@ -16,7 +16,7 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path
-from smapp.views import index_master, index, agregar, modificar, eliminar, listar_estudiantes, calendario, editar_evento, eliminar_evento, listar_cursos, agregar_curso, editar_curso, eliminar_curso, gestionar_horarios, listar_asignaturas, agregar_asignatura, editar_asignatura, eliminar_asignatura, login_view, inicio, logout_view, mis_horarios, mi_curso
+from smapp.views import index_master, index, agregar, modificar, eliminar, listar_estudiantes, calendario, editar_evento, eliminar_evento, listar_cursos, agregar_curso, editar_curso, eliminar_curso, gestionar_horarios, listar_asignaturas, agregar_asignatura, editar_asignatura, eliminar_asignatura, login_view, inicio, logout_view, mis_horarios, mi_curso, ver_horario_curso, agregar_asignatura_completa, ingresar_notas, ver_notas_curso
 
 
 urlpatterns = [
@@ -44,4 +44,8 @@ urlpatterns = [
     path('logout/', logout_view, name='logout'),
     path('mis-horarios/', mis_horarios, name='mis_horarios'),
     path('mi-curso/', mi_curso, name='mi_curso'),
+    path('cursos/ver-horario/', ver_horario_curso, name='ver_horario_curso'),
+    path('asignaturas/agregar-completa/', agregar_asignatura_completa, name='agregar_asignatura_completa'),
+    path('notas/ingresar/', ingresar_notas, name='ingresar_notas'),
+    path('notas/ver/', ver_notas_curso, name='ver_notas_curso'),
 ]

@@ -51,6 +51,7 @@ class Profesor(Persona):
     especialidad = models.CharField(max_length=100)
     fecha_contratacion = models.DateField(auto_now_add=True)
     user = models.OneToOneField(User, on_delete=models.CASCADE, null=True, blank=True)
+    asignaturas = models.ManyToManyField('Asignatura', related_name='profesores', blank=True)
 
     def __str__(self):
         return f"{self.codigo_profesor} - {self.primer_nombre} {self.apellido_paterno}"
@@ -81,7 +82,13 @@ class Asignatura(models.Model):
     nombre = models.CharField(max_length=100)
     codigo_asignatura = models.CharField(max_length=10, unique=True)
     descripcion = models.TextField(blank=True, null=True)
-    profesor_responsable = models.ForeignKey('Profesor', on_delete=models.SET_NULL, null=True, blank=True, related_name='asignaturas')
+    profesor_responsable = models.ForeignKey(
+        'Profesor',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='asignaturas_responsable'  # <-- Cambia esto
+    )
 
     def __str__(self):
         return self.nombre
@@ -146,8 +153,11 @@ class Calificacion(models.Model):
     Podría ser para parciales, tareas, exámenes, etc.
     """
     inscripcion = models.ForeignKey(Inscripcion, on_delete=models.CASCADE)
-    nombre_evaluacion = models.CharField(max_length=100) # Ej. 'Primer Parcial', 'Tarea 1', 'Examen Final'
+    nombre_evaluacion = models.CharField(max_length=100) # Ej. 'Primer Parcial', 'Tarea 1', etc.
     puntaje = models.DecimalField(max_digits=5, decimal_places=2)
+    porcentaje = models.DecimalField(max_digits=5, decimal_places=2, default=0)  # Nuevo campo
+    detalle = models.CharField(max_length=255, blank=True, null=True)            # Nuevo campo
+    descripcion = models.TextField(blank=True, null=True)                        # Nuevo campo
     fecha_evaluacion = models.DateField(auto_now_add=True)
 
     def __str__(self):
@@ -198,4 +208,5 @@ class Perfil(models.Model):
 
     def __str__(self):
         return f"{self.user.username} ({self.get_tipo_usuario_display()})"
+
 
