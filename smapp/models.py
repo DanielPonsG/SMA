@@ -1,5 +1,6 @@
 from django.db import models
 from django.contrib.auth.models import User
+from django.utils import timezone
 
 # Create your models here.
 class Persona(models.Model):
@@ -208,5 +209,31 @@ class Perfil(models.Model):
 
     def __str__(self):
         return f"{self.user.username} ({self.get_tipo_usuario_display()})"
+
+class AsistenciaAlumno(models.Model):
+    estudiante = models.ForeignKey(Estudiante, on_delete=models.CASCADE)
+    asignatura = models.ForeignKey(Asignatura, on_delete=models.CASCADE)
+    fecha = models.DateField(default=timezone.now)
+    presente = models.BooleanField(default=True)
+    observacion = models.CharField(max_length=255, blank=True, null=True)
+
+    class Meta:
+        unique_together = ('estudiante', 'asignatura', 'fecha')
+
+    def __str__(self):
+        return f"{self.estudiante} - {self.asignatura} - {self.fecha} - {'Presente' if self.presente else 'Ausente'}"
+
+class AsistenciaProfesor(models.Model):
+    profesor = models.ForeignKey(Profesor, on_delete=models.CASCADE)
+    asignatura = models.ForeignKey(Asignatura, on_delete=models.CASCADE, null=True, blank=True)  # <--- Cambia aquí
+    fecha = models.DateField(default=timezone.now)
+    presente = models.BooleanField(default=True)
+    observacion = models.CharField(max_length=255, blank=True, null=True)
+
+    class Meta:
+        unique_together = ('profesor', 'asignatura', 'fecha')
+
+    def __str__(self):
+        return f"{self.profesor} - {self.asignatura} - {self.fecha} - {'Presente' if self.presente else 'Ausente'}"
 
 

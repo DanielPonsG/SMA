@@ -11,7 +11,9 @@
       </div>
     </div>
     <h2>Cursos</h2>
-    <a href="{% url 'agregar_curso' %}" class="btn btn-success mb-3">Agregar Curso</a>
+    {% if user.perfil.tipo_usuario == 'director' %}
+      <a href="{% url 'agregar_curso' %}" class="btn btn-success mb-3">Agregar Curso</a>
+    {% endif %}
     <table class="table table-bordered">
       <thead>
         <tr>
@@ -20,7 +22,6 @@
           <th>Profesor Responsable</th>
           <th>Estudiantes</th>
           <th>Asignaturas</th>
-          <th>Horarios</th>
           <th>Acciones</th>
         </tr>
       </thead>
@@ -28,7 +29,7 @@
         {% for curso in cursos %}
         <tr>
           <td>{{ curso.nombre }}</td>
-          <td>{{ curso.codigo_curso }}</td>
+          <td>{{ curso.id }}</td>
           <td>{{ curso.profesor_responsable }}</td>
           <td>
             {{ curso.estudiantes.count }}
@@ -41,11 +42,9 @@
           </td>
           <td>{{ curso.asignaturas.count }}</td>
           <td>
-            <a href="{% url 'gestionar_horarios' curso.id %}" class="btn btn-info btn-sm">Ver</a>
-          </td>
-          <td>
-            <a href="{% url 'editar_curso' curso.id %}" class="btn btn-primary btn-sm">Editar</a>
-            <a href="{% url 'eliminar_curso' curso.id %}" class="btn btn-danger btn-sm">Eliminar</a>
+            {% if user.perfil.tipo_usuario == 'director' %}
+              <a href="{% url 'eliminar_curso' curso.id %}" class="btn btn-danger btn-sm">Eliminar</a>
+            {% endif %}
           </td>
         </tr>
         {% if curso.estudiantes.count > 0 %}

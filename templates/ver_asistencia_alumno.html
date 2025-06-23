@@ -1,0 +1,67 @@
+<!-- filepath: c:\Users\Danie\Desktop\Proyecto_Titulo\sma\templates\ver_asistencia_alumno.html -->
+{% extends "index_master.html" %}
+{% block content %}
+<div class="right_col" role="main">
+  <div class="container-fluid">
+    <h3>Asistencia de Alumnos</h3>
+    <form method="get" class="row g-2 mb-3">
+      <div class="col-md-3">
+        <label class="form-label">Asignatura</label>
+        <select name="asignatura" class="form-select">
+          <option value="">Todas</option>
+          {% for asig in asignaturas %}
+            <option value="{{ asig.id }}" {% if asig.id|stringformat:"s" == asignatura_id %}selected{% endif %}>{{ asig.nombre }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="col-md-3">
+        <label class="form-label">Día</label>
+        <input type="date" name="fecha" class="form-control" value="{{ fecha }}">
+      </div>
+      <div class="col-md-3">
+        <label class="form-label">Semana</label>
+        <input type="week" name="semana" class="form-control" value="{{ semana }}">
+      </div>
+      <div class="col-md-3 d-flex align-items-end">
+        <button type="submit" class="btn btn-primary w-100">Filtrar</button>
+      </div>
+    </form>
+    <table class="table table-bordered table-striped">
+      <thead class="table-dark">
+        <tr>
+          <th>Fecha</th>
+          <th>Asignatura</th>
+          <th>Alumno</th>
+          <th>Presente</th>
+          <th>Observación</th>
+          <th>Acciones</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for asistencia in asistencias %}
+        <tr>
+          <td>{{ asistencia.fecha }}</td>
+          <td>{{ asistencia.asignatura.nombre }}</td>
+          <td>{{ asistencia.estudiante.primer_nombre }} {{ asistencia.estudiante.apellido_paterno }}</td>
+          <td>
+            {% if asistencia.presente %}
+              <span class="badge bg-success">Sí</span>
+            {% else %}
+              <span class="badge bg-danger">No</span>
+            {% endif %}
+          </td>
+          <td>{{ asistencia.observacion }}</td>
+          <td>
+            <a href="{% url 'editar_asistencia_alumno' asistencia.id %}" class="btn btn-sm btn-primary">Editar</a>
+          </td>
+        </tr>
+        {% empty %}
+        <tr>
+          <td colspan="6" class="text-center">No hay registros de asistencia.</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

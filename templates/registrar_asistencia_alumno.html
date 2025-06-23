@@ -1,0 +1,52 @@
+{% extends "index_master.html" %}
+{% block content %}
+<div class="right_col" role="main">
+  <div class="container-fluid">
+    <h3>Registrar Asistencia de Alumnos</h3>
+    {% if mensaje %}
+      <div class="alert alert-success">{{ mensaje }}</div>
+    {% endif %}
+    <form method="post">
+      {% csrf_token %}
+      <div class="mb-3">
+        <label>Asignatura:</label>
+        <select name="asignatura" class="form-select" required>
+          {% for asig in asignaturas %}
+            <option value="{{ asig.id }}">{{ asig.nombre }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="mb-3">
+        <label>Fecha:</label>
+        <input type="date" name="fecha" class="form-control" value="{{ today|default:None }}">
+      </div>
+      <table class="table table-bordered">
+        <thead>
+          <tr>
+            <th>Alumno</th>
+            <th>Presente</th>
+            <th>Observación</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for est in estudiantes %}
+          <tr>
+            <td>
+              <input type="hidden" name="estudiante" value="{{ est.id }}">
+              {{ est.primer_nombre }} {{ est.apellido_paterno }}
+            </td>
+            <td>
+              <input type="checkbox" name="presente_{{ est.id }}" checked>
+            </td>
+            <td>
+              <input type="text" name="observacion_{{ est.id }}" class="form-control">
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+      <button type="submit" class="btn btn-success">Guardar Asistencia</button>
+    </form>
+  </div>
+</div>
+{% endblock %}

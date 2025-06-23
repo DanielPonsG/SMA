@@ -1,5 +1,5 @@
 from django import forms
-from .models import Estudiante, Profesor, EventoCalendario, Curso, HorarioCurso, Asignatura, Inscripcion, Calificacion, Grupo, PeriodoAcademico
+from .models import Estudiante, Profesor, EventoCalendario, Curso, HorarioCurso, Asignatura, Inscripcion, Calificacion, Grupo, PeriodoAcademico, AsistenciaAlumno, AsistenciaProfesor
 
 class EstudianteForm(forms.ModelForm):
     username = forms.CharField(label="Nombre de usuario")
@@ -53,15 +53,26 @@ class AsignaturaForm(forms.ModelForm):
         fields = ['nombre', 'codigo_asignatura', 'descripcion', 'profesor_responsable']
 
 class AsignaturaCompletaForm(forms.ModelForm):
-    profesor_responsable = forms.ModelChoiceField(queryset=Profesor.objects.all(), label="Profesor responsable")
-    cursos = forms.ModelMultipleChoiceField(queryset=Curso.objects.all(), label="Cursos", required=True)
-    dia = forms.ChoiceField(choices=HorarioCurso.DIAS_SEMANA, label="Día")
-    hora_inicio = forms.TimeField(widget=forms.TimeInput(attrs={'type': 'time'}), label="Hora inicio")
-    hora_fin = forms.TimeField(widget=forms.TimeInput(attrs={'type': 'time'}), label="Hora fin")
+    profesor_responsable = forms.ModelChoiceField(
+        queryset=Profesor.objects.all(),
+        label="Profesor responsable",
+        required=False
+    )
+    cursos = forms.ModelMultipleChoiceField(
+        queryset=Curso.objects.all(),
+        label="Cursos",
+        required=True
+    )
+    dias = forms.MultipleChoiceField(
+        choices=HorarioCurso.DIAS_SEMANA,
+        label="Días",
+        widget=forms.CheckboxSelectMultiple,
+        required=True
+    )
 
     class Meta:
         model = Asignatura
-        fields = ['nombre', 'codigo_asignatura', 'descripcion', 'profesor_responsable', 'cursos', 'dia', 'hora_inicio', 'hora_fin']
+        fields = ['nombre', 'codigo_asignatura', 'descripcion', 'profesor_responsable', 'cursos', 'dias']
 
 class SeleccionCursoAlumnoForm(forms.Form):
     curso = forms.ModelChoiceField(queryset=Curso.objects.all(), label="Curso")
@@ -76,13 +87,22 @@ class SeleccionCursoAlumnoForm(forms.Form):
     alumno = forms.ModelChoiceField(queryset=Estudiante.objects.none(), label="Alumno", required=False)
 
     def __init__(self, *args, **kwargs):
+        user = kwargs.pop('user', None)  # <-- Agrega esto
         curso_id = kwargs.pop('curso_id', None)
         asignatura_id = kwargs.pop('asignatura_id', None)
         periodo_id = kwargs.pop('periodo_id', None)
         super().__init__(*args, **kwargs)
         if curso_id:
             self.fields['curso'].initial = curso_id
-            self.fields['asignatura'].queryset = Asignatura.objects.filter(cursos__id=curso_id)
+            # Filtra asignaturas por curso y por profesor responsable si es profesor
+            if user and hasattr(user, 'perfil') and user.perfil.tipo_usuario == 'profesor':
+                profesor = getattr(user, 'profesor', None)
+                self.fields['asignatura'].queryset = Asignatura.objects.filter(
+                    cursos__id=curso_id,
+                    profesor_responsable=profesor
+                )
+            else:
+                self.fields['asignatura'].queryset = Asignatura.objects.filter(cursos__id=curso_id)
             self.fields['alumno'].queryset = Estudiante.objects.filter(cursos__id=curso_id)
         else:
             self.fields['asignatura'].queryset = Asignatura.objects.none()
@@ -92,13 +112,17 @@ class SeleccionCursoAlumnoForm(forms.Form):
         if periodo_id:
             self.fields['periodo'].initial = periodo_id
 
-class CalificacionForm(forms.Form):
-    nombre_evaluacion = forms.CharField(label="Nombre de la evaluación")
-    puntaje = forms.DecimalField(
-        label="Puntaje", max_digits=3, decimal_places=1,
-        min_value=1.0, max_value=7.0,
-        help_text="Ingrese una nota entre 1,0 y 7,0"
-    )
-    porcentaje = forms.DecimalField(label="Porcentaje", max_digits=5, decimal_places=2)
-    detalle = forms.CharField(label="Detalle", max_length=255, required=False)
-    descripcion = forms.CharField(label="Descripción", widget=forms.Textarea, required=False)
+class CalificacionForm(forms.ModelForm):
+    class Meta:
+        model = Calificacion
+        fields = ['nombre_evaluacion', 'puntaje', 'porcentaje', 'detalle', 'descripcion']
+
+class AsistenciaAlumnoForm(forms.ModelForm):
+    class Meta:
+        model = AsistenciaAlumno
+        fields = ['presente', 'observacion']
+
+class AsistenciaProfesorForm(forms.ModelForm):
+    class Meta:
+        model = AsistenciaProfesor
+        fields = ['presente', 'observacion']

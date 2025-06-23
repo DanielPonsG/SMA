@@ -28,6 +28,7 @@
             <th>Detalle</th>
             <th>Descripción</th>
             <th>Periodo Académico</th>
+            <th>Acciones</th>
           </tr>
         </thead>
         <tbody>
@@ -41,10 +42,16 @@
             <td>{{ cal.detalle }}</td>
             <td>{{ cal.descripcion }}</td>
             <td>{{ cal.inscripcion.grupo.periodo_academico.nombre }}</td>
+            <td>
+              {% if user.perfil.tipo_usuario == 'director' or user.perfil.tipo_usuario == 'profesor' and cal.inscripcion.grupo.asignatura.profesor_responsable and cal.inscripcion.grupo.asignatura.profesor_responsable.user == user %}
+                <a href="{% url 'editar_nota' cal.id %}" class="btn btn-sm btn-primary">Modificar</a>
+                <a href="{% url 'eliminar_nota' cal.id %}" class="btn btn-sm btn-danger" onclick="return confirm('¿Seguro que deseas eliminar esta nota?');">Eliminar</a>
+              {% endif %}
+            </td>
           </tr>
           {% empty %}
           <tr>
-            <td colspan="8" class="text-center">No hay notas registradas para este curso.</td>
+            <td colspan="9" class="text-center">No hay notas registradas para este curso.</td>
           </tr>
           {% endfor %}
         </tbody>

@@ -1,0 +1,26 @@
+<!-- filepath: c:\Users\Danie\Desktop\Proyecto_Titulo\sma\templates\editar_asistencia_profesores.html -->
+{% extends "index_master.html" %}
+{% block content %}
+<div class="right_col" role="main">
+  <div class="container-fluid">
+    <h3>Editar Asistencia de Profesor</h3>
+    {% if mensaje %}
+      <div class="alert alert-success">{{ mensaje }}</div>
+    {% endif %}
+    <form method="post">
+      {% csrf_token %}
+      {% for field in form %}
+        <div class="mb-3">
+          <label class="form-label fw-bold">{{ field.label }}</label>
+          {{ field }}
+          {% for error in field.errors %}
+            <div class="text-danger small">{{ error }}</div>
+          {% endfor %}
+        </div>
+      {% endfor %}
+      <button type="submit" class="btn btn-success">Guardar Cambios</button>
+      <a href="{% url 'ver_asistencia_profesor' %}" class="btn btn-secondary">Cancelar</a>
+    </form>
+  </div>
+</div>
+{% endblock %}

@@ -16,7 +16,7 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path
-from smapp.views import index_master, index, agregar, modificar, eliminar, listar_estudiantes, calendario, editar_evento, eliminar_evento, listar_cursos, agregar_curso, editar_curso, eliminar_curso, gestionar_horarios, listar_asignaturas, agregar_asignatura, editar_asignatura, eliminar_asignatura, login_view, inicio, logout_view, mis_horarios, mi_curso, ver_horario_curso, agregar_asignatura_completa, ingresar_notas, ver_notas_curso
+from smapp.views import index_master, index, agregar, modificar, eliminar, listar_estudiantes, calendario, editar_evento, eliminar_evento, listar_cursos, agregar_curso, editar_curso, eliminar_curso, gestionar_horarios, listar_asignaturas, agregar_asignatura, editar_asignatura, eliminar_asignatura, login_view, inicio, logout_view, mis_horarios, mi_curso, ver_horario_curso, agregar_asignatura_completa, ingresar_notas, ver_notas_curso, api_horarios_cursos, editar_nota, eliminar_nota, registrar_asistencia_alumno, ver_asistencia_alumno, registrar_asistencia_profesor, ver_asistencia_profesor, editar_asistencia_alumno, editar_asistencia_profesor, agregar_horario, editar_horario, eliminar_horario
 
 
 urlpatterns = [
@@ -48,4 +48,19 @@ urlpatterns = [
     path('asignaturas/agregar-completa/', agregar_asignatura_completa, name='agregar_asignatura_completa'),
     path('notas/ingresar/', ingresar_notas, name='ingresar_notas'),
     path('notas/ver/', ver_notas_curso, name='ver_notas_curso'),
+    path('api/horarios_cursos/', api_horarios_cursos, name='api_horarios_cursos'),
+    path('notas/editar/<int:nota_id>/', editar_nota, name='editar_nota'),
+    path('notas/eliminar/<int:nota_id>/', eliminar_nota, name='eliminar_nota'),
+]
+
+urlpatterns += [
+    path('asistencia/alumno/registrar/', registrar_asistencia_alumno, name='registrar_asistencia_alumno'),
+    path('asistencia/alumno/ver/', ver_asistencia_alumno, name='ver_asistencia_alumno'),
+    path('asistencia/profesor/registrar/', registrar_asistencia_profesor, name='registrar_asistencia_profesor'),
+    path('asistencia/profesor/ver/', ver_asistencia_profesor, name='ver_asistencia_profesor'),
+    path('asistencia/alumno/editar/<int:asistencia_id>/', editar_asistencia_alumno, name='editar_asistencia_alumno'),
+    path('asistencia/profesor/editar/<int:asistencia_id>/', editar_asistencia_profesor, name='editar_asistencia_profesor'),
+    path('horario/agregar/<int:curso_id>/', agregar_horario, name='agregar_horario'),
+    path('horario/editar/<int:horario_id>/', editar_horario, name='editar_horario'),
+    path('horario/eliminar/<int:horario_id>/', eliminar_horario, name='eliminar_horario'),
 ]

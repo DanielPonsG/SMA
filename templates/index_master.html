@@ -106,6 +106,69 @@
                     </li>
                   </ul>
                 </div>
+              {% elif user.is_authenticated and user.perfil.tipo_usuario == 'profesor' %}
+                <div class="menu_section">
+                  <h3>PÁGINA PRINCIPAL</h3>
+                  <ul class="nav side-menu">
+                    <li>
+                      <a href="{% url 'inicio' %}"><i class="fa fa-home"></i> Inicio</a>
+                    </li>
+                  </ul>
+                </div>
+                <div class="menu_section">
+                  <h3>Calendario</h3>
+                  <ul class="nav side-menu">
+                    <li>
+                      <a href="{% url 'calendario' %}"><i class="fa fa-calendar"></i> Calendario</a>
+                    </li>
+                  </ul>
+                </div>
+                <div class="menu_section">
+                  <h3>Cursos</h3>
+                  <ul class="nav side-menu">
+                    <li>
+                      <a href="{% url 'listar_cursos' %}"><i class="fa fa-graduation-cap"></i> Cursos</a>
+                    </li>
+                  </ul>
+                </div>
+                <div class="menu_section">
+                  <h3>Asignaturas</h3>
+                  <ul class="nav side-menu">
+                    <li>
+                      <a href="{% url 'listar_asignaturas' %}"><i class="fa fa-book"></i> Mis Asignaturas</a>
+                    </li>
+                  </ul>
+                </div>
+                <div class="menu_section">
+                  <h3>Ver Horario</h3>
+                  <ul class="nav side-menu">
+                    <li>
+                      <a href="{% url 'ver_horario_curso' %}"><i class="fa fa-calendar"></i> Mi Horario</a>
+                    </li>
+                  </ul>
+                </div>
+                <div class="menu_section">
+                  <h3>Notas</h3>
+                  <ul class="nav side-menu">
+                    <li>
+                      <a href="{% url 'ingresar_notas' %}"><i class="fa fa-pencil"></i> Ingresar/Modificar Notas</a>
+                    </li>
+                    <li>
+                      <a href="{% url 'ver_notas_curso' %}"><i class="fa fa-list"></i> Ver Notas</a>
+                    </li>
+                  </ul>
+                </div>
+                <div class="menu_section">
+                  <h3>Asistencia</h3>
+                  <ul class="nav side-menu">
+                    <li>
+                      <a href="{% url 'registrar_asistencia_alumno' %}"><i class="fa fa-check-square-o"></i> Tomar/Modificar Asistencia</a>
+                    </li>
+                    <li>
+                      <a href="{% url 'ver_asistencia_alumno' %}"><i class="fa fa-list-alt"></i> Ver Asistencia Alumnos</a>
+                    </li>
+                  </ul>
+                </div>
               {% else %}
                 <div class="menu_section">
                   <h3>PÁGINA PRINCIPAL</h3>
@@ -130,9 +193,6 @@
                     <li>
                       <a href="{% url 'listar_estudiantes' %}"><i class="fa fa-list"></i> Listar</a>
                     </li>
-                    <li>
-                      <a href="{% url 'agregar_asignatura_completa' %}"><i class="fa fa-plus"></i> Agregar Asignatura Completa</a>
-                    </li>
                   </ul>
                 </div>
                 <div class="menu_section">
@@ -155,7 +215,9 @@
                     <li>
                       <a href="{% url 'ver_horario_curso' %}"><i class="fa fa-calendar"></i> Ver Horario de Curso</a>
                     </li>
-                    
+                     <li>
+                      <a href="{% url 'agregar_asignatura_completa' %}"><i class="fa fa-plus"></i> Agregar Asignatura Completa</a>
+                    </li>
                   </ul>
                 </div>
                 <div class="menu_section">
@@ -167,6 +229,25 @@
                     <li>
                       <a href="{% url 'ver_notas_curso' %}"><i class="fa fa-list"></i> Ver Notas</a>
                     </li>
+                  </ul>
+                </div>
+                <div class="menu_section">
+                  <h3>Asistencia</h3>
+                  <ul class="nav side-menu">
+                    <li>
+                      <a href="{% url 'registrar_asistencia_alumno' %}"><i class="fa fa-check-square-o"></i> Registrar Asistencia Alumnos</a>
+                    </li>
+                    <li>
+                      <a href="{% url 'ver_asistencia_alumno' %}"><i class="fa fa-list-alt"></i> Ver Asistencia Alumnos</a>
+                    </li>
+                    {% if user.perfil.tipo_usuario == 'director' %}
+                    <li>
+                      <a href="{% url 'registrar_asistencia_profesor' %}"><i class="fa fa-check"></i> Registrar Asistencia Profesores</a>
+                    </li>
+                    <li>
+                      <a href="{% url 'ver_asistencia_profesor' %}"><i class="fa fa-list"></i> Ver Asistencia Profesores</a>
+                    </li>
+                    {% endif %}
                   </ul>
                 </div>
               {% endif %}

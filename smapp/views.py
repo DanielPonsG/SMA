@@ -7,10 +7,11 @@ from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User
 from .models import Perfil
-from django.http import HttpResponseForbidden
+from django.http import HttpResponseForbidden, JsonResponse
 from django.forms import formset_factory
 from .forms import SeleccionCursoAlumnoForm, CalificacionForm
-from .models import Inscripcion, Grupo, Calificacion
+from .models import Inscripcion, Grupo, Calificacion, AsistenciaAlumno, AsistenciaProfesor
+from datetime import date, datetime, timedelta
 
 # Create your views here.
 # Vista de la página de inicio del maestro
@@ -77,13 +78,13 @@ def modificar(request):
     form = None
     resultados = []
 
-    # Buscar y mostrar resultados
     if tipo == 'profesor':
         if query:
             resultados = Profesor.objects.filter(
-                models.Q(primer_nombre__icontains=query) |
-                models.Q(apellido_paterno__icontains=query) |
-                models.Q(codigo_profesor__icontains=query)
+                Q(primer_nombre__icontains=query) |
+                Q(apellido_paterno__icontains=query) |
+                Q(codigo_profesor__icontains=query) |
+                Q(id__iexact=query)  # Permite buscar por ID exacto
             )
         else:
             resultados = Profesor.objects.none()
@@ -99,9 +100,10 @@ def modificar(request):
     else:
         if query:
             resultados = Estudiante.objects.filter(
-                models.Q(primer_nombre__icontains=query) |
-                models.Q(apellido_paterno__icontains=query) |
-                models.Q(codigo_estudiante__icontains=query)
+                Q(primer_nombre__icontains=query) |
+                Q(apellido_paterno__icontains=query) |
+                Q(codigo_estudiante__icontains=query) |
+                Q(id__iexact=query)  # Permite buscar por ID exacto
             )
         else:
             resultados = Estudiante.objects.none()
@@ -130,6 +132,24 @@ def eliminar(request):
     mensaje = ""
     resultados = []
     objeto = None
+
+    # Eliminar por ID directo
+    if request.method == 'POST' and request.POST.get('eliminar_por_id'):
+        id_a_eliminar = request.POST.get('id_a_eliminar')
+        if tipo == 'profesor':
+            try:
+                obj = Profesor.objects.get(id=id_a_eliminar)
+                obj.delete()
+                mensaje = f"Profesor con ID {id_a_eliminar} eliminado correctamente."
+            except Profesor.DoesNotExist:
+                mensaje = f"No existe un profesor con ID {id_a_eliminar}."
+        else:
+            try:
+                obj = Estudiante.objects.get(id=id_a_eliminar)
+                obj.delete()
+                mensaje = f"Estudiante con ID {id_a_eliminar} eliminado correctamente."
+            except Estudiante.DoesNotExist:
+                mensaje = f"No existe un estudiante con ID {id_a_eliminar}."
 
     # Buscar y mostrar resultados
     if tipo == 'profesor':
@@ -173,11 +193,25 @@ def eliminar(request):
     })
 
 def listar_estudiantes(request):
-    """
-    Muestra la lista de estudiantes y profesores registrados, y sus conteos.
-    """
+    filtro_estudiante = request.GET.get('filtro_estudiante', '')
+    filtro_profesor = request.GET.get('filtro_profesor', '')
+
     estudiantes = Estudiante.objects.all()
     profesores = Profesor.objects.all()
+
+    if filtro_estudiante:
+        estudiantes = estudiantes.filter(
+            models.Q(primer_nombre__icontains=filtro_estudiante) |
+            models.Q(apellido_paterno__icontains=filtro_estudiante) |
+            models.Q(codigo_estudiante__icontains=filtro_estudiante)
+        )
+    if filtro_profesor:
+        profesores = profesores.filter(
+            models.Q(primer_nombre__icontains=filtro_profesor) |
+            models.Q(apellido_paterno__icontains=filtro_profesor) |
+            models.Q(codigo_profesor__icontains=filtro_profesor)
+        )
+
     total_estudiantes = estudiantes.count()
     total_profesores = profesores.count()
     return render(request, 'listar_estudiantes.html', {
@@ -303,15 +337,27 @@ def gestionar_horarios(request, curso_id):
     })
 
 def listar_asignaturas(request):
-    if request.user.perfil.tipo_usuario == 'alumno':
+    perfil = getattr(request.user, 'perfil', None)
+    tipo_usuario = perfil.tipo_usuario if perfil else None
+
+    cursos_alumno_ids = []
+    if tipo_usuario == 'alumno':
         estudiante = getattr(request.user, 'estudiante', None)
         asignaturas = Asignatura.objects.filter(cursos__estudiantes=estudiante).distinct() if estudiante else Asignatura.objects.none()
-    else:
+        if estudiante:
+            cursos_alumno_ids = list(estudiante.cursos.values_list('id', flat=True))
+    elif tipo_usuario == 'profesor':
+        profesor = getattr(request.user, 'profesor', None)
+        asignaturas = Asignatura.objects.filter(profesor_responsable=profesor).distinct() if profesor else Asignatura.objects.none()
+    else:  # director u otro
         asignaturas = Asignatura.objects.all()
+
     total_asignaturas = asignaturas.count()
     return render(request, 'listar_asignaturas.html', {
         'asignaturas': asignaturas,
         'total_asignaturas': total_asignaturas,
+        'tipo_usuario': tipo_usuario,
+        'cursos_alumno_ids': cursos_alumno_ids,
     })
 
 def agregar_asignatura(request):
@@ -519,48 +565,91 @@ from .models import Curso, HorarioCurso
 
 @login_required
 def ver_horario_curso(request):
+    perfil = getattr(request.user, 'perfil', None)
+    es_director = perfil and perfil.tipo_usuario == 'director'
+    es_profesor = perfil and perfil.tipo_usuario == 'profesor'
     cursos = Curso.objects.all()
     curso_seleccionado = None
     horarios = []
-    if request.method == "POST":
-        curso_id = request.POST.get("curso_id")
-        if curso_id:
-            curso_seleccionado = Curso.objects.get(id=curso_id)
-            horarios = HorarioCurso.objects.filter(curso=curso_seleccionado).select_related('asignatura')
-    return render(request, "ver_horario_curso.html", {
+
+    if es_director:
+        # Director puede seleccionar cualquier curso
+        if request.method == "POST":
+            curso_id = request.POST.get("curso_id")
+            if curso_id:
+                curso_seleccionado = Curso.objects.get(id=curso_id)
+                horarios = HorarioCurso.objects.filter(curso=curso_seleccionado).select_related('asignatura')
+    elif es_profesor:
+        # Profesor solo ve sus horarios, asignaturas y cursos
+        profesor = getattr(request.user, 'profesor', None)
+        # Horarios donde el profesor es responsable de la asignatura
+        horarios = HorarioCurso.objects.filter(
+            asignatura__profesor_responsable=profesor
+        ).select_related('asignatura', 'curso')
+    else:
+        horarios = []
+
+    context = {
         "cursos": cursos,
         "curso_seleccionado": curso_seleccionado,
         "horarios": horarios,
-    })
+        "es_director": es_director,
+        "es_profesor": es_profesor,
+    }
+    return render(request, "ver_horario_curso.html", context)
 
 @login_required
 def agregar_asignatura_completa(request):
     if not hasattr(request.user, 'perfil') or request.user.perfil.tipo_usuario != 'director':
         return HttpResponseForbidden("No tienes permiso para acceder aquí.")
     mensaje = ""
+    errores = []
     if request.method == 'POST':
         form = AsignaturaCompletaForm(request.POST)
         if form.is_valid():
             asignatura = form.save(commit=False)
-            asignatura.profesor_responsable = form.cleaned_data['profesor_responsable']
+            if form.cleaned_data['profesor_responsable']:
+                asignatura.profesor_responsable = form.cleaned_data['profesor_responsable']
+            else:
+                asignatura.profesor_responsable = None
             asignatura.save()
-            # Asignar a cursos seleccionados
             cursos = form.cleaned_data['cursos']
+            dias = form.cleaned_data['dias']
+            topes = []
             for curso in cursos:
-                curso.asignaturas.add(asignatura)
-                # Crear el horario para cada curso
-                HorarioCurso.objects.create(
-                    curso=curso,
-                    asignatura=asignatura,
-                    dia=form.cleaned_data['dia'],
-                    hora_inicio=form.cleaned_data['hora_inicio'],
-                    hora_fin=form.cleaned_data['hora_fin']
-                )
-            mensaje = "Asignatura agregada correctamente con horario y profesor."
-            form = AsignaturaCompletaForm()
+                for dia in dias:
+                    hora_inicio = request.POST.get(f"hora_inicio_{dia}")
+                    hora_fin = request.POST.get(f"hora_fin_{dia}")
+                    # Verificar tope de horario
+                    existe_tope = HorarioCurso.objects.filter(
+                        curso=curso,
+                        dia=dia,
+                        # Tope si se solapan los horarios
+                        hora_inicio__lt=hora_fin,
+                        hora_fin__gt=hora_inicio
+                    ).exists()
+                    if existe_tope:
+                        topes.append(f"Tope en {curso.nombre} el {dict(HorarioCurso.DIAS_SEMANA)[dia]} entre {hora_inicio} y {hora_fin}")
+            if topes:
+                errores = topes
+            else:
+                for curso in cursos:
+                    curso.asignaturas.add(asignatura)
+                    for dia in dias:
+                        hora_inicio = request.POST.get(f"hora_inicio_{dia}")
+                        hora_fin = request.POST.get(f"hora_fin_{dia}")
+                        HorarioCurso.objects.create(
+                            curso=curso,
+                            asignatura=asignatura,
+                            dia=dia,
+                            hora_inicio=hora_inicio,
+                            hora_fin=hora_fin
+                        )
+                mensaje = "Asignatura agregada correctamente con horarios y cursos."
+                form = AsignaturaCompletaForm()
     else:
         form = AsignaturaCompletaForm()
-    return render(request, 'agregar_asignatura_completa.html', {'form': form, 'mensaje': mensaje})
+    return render(request, 'agregar_asignatura_completa.html', {'form': form, 'mensaje': mensaje, 'errores': errores})
 
 @login_required
 def ingresar_notas(request):
@@ -572,7 +661,13 @@ def ingresar_notas(request):
     CalificacionFormSet = formset_factory(CalificacionForm, extra=1)
 
     if request.method == "POST":
-        seleccion_form = SeleccionForm(request.POST, curso_id=curso_id, asignatura_id=asignatura_id, periodo_id=periodo_id)
+        seleccion_form = SeleccionForm(
+            request.POST,
+            curso_id=curso_id,
+            asignatura_id=asignatura_id,
+            periodo_id=periodo_id,
+            user=request.user  # <-- Agrega esto
+        )
         formset = CalificacionFormSet(request.POST)
         if seleccion_form.is_valid() and formset.is_valid():
             curso = seleccion_form.cleaned_data['curso']
@@ -606,7 +701,8 @@ def ingresar_notas(request):
         seleccion_form = SeleccionForm(
             curso_id=curso_id,
             asignatura_id=asignatura_id,
-            periodo_id=periodo_id
+            periodo_id=periodo_id,
+            user=request.user  # <-- Agrega esto
         )
         formset = CalificacionFormSet()
     return render(request, "ingresar_notas.html", {
@@ -620,24 +716,301 @@ def ingresar_notas(request):
 
 @login_required
 def ver_notas_curso(request):
-    cursos = Curso.objects.all()
+    user = request.user
+    perfil = getattr(user, 'perfil', None)
+    cursos = Curso.objects.all()  # Mostrar todos los cursos para todos
     curso_id = request.GET.get('curso')
     calificaciones = []
     curso_seleccionado = None
+
     if curso_id:
-        curso_seleccionado = Curso.objects.get(id=curso_id)
-        # Buscar todas las calificaciones de los alumnos de este curso
+        curso_seleccionado = get_object_or_404(Curso, id=curso_id)
         calificaciones = Calificacion.objects.filter(
             inscripcion__grupo__asignatura__cursos=curso_seleccionado
         ).select_related(
             'inscripcion__estudiante',
             'inscripcion__grupo__asignatura'
         ).order_by('inscripcion__estudiante__apellido_paterno', 'inscripcion__grupo__asignatura__nombre')
+
     return render(request, "ver_notas_curso.html", {
         "cursos": cursos,
         "curso_seleccionado": curso_seleccionado,
         "calificaciones": calificaciones,
     })
+
+@login_required
+def api_horarios_cursos(request):
+    cursos_ids = request.GET.get("cursos", "")
+    ids = [int(i) for i in cursos_ids.split(",") if i.isdigit()]
+    horarios = HorarioCurso.objects.filter(curso_id__in=ids).select_related("curso", "asignatura")
+    data = [{
+        "curso": h.curso.nombre,
+        "asignatura": h.asignatura.nombre if h.asignatura else "",
+        "dia": h.get_dia_display(),
+        "hora_inicio": h.hora_inicio.strftime("%H:%M"),
+        "hora_fin": h.hora_fin.strftime("%H:%M"),
+    } for h in horarios]
+    return JsonResponse(data, safe=False)
+
+@login_required
+def editar_nota(request, nota_id):
+    nota = get_object_or_404(Calificacion, id=nota_id)
+    mensaje = ""
+    if request.method == 'POST':
+        form = CalificacionForm(request.POST, instance=nota)
+        if form.is_valid():
+            form.save()
+            mensaje = "Nota modificada con éxito"
+            return redirect('ver_notas_curso')  # O redirige a la misma vista con el curso seleccionado
+    else:
+        form = CalificacionForm(instance=nota)
+    return render(request, 'editar_nota.html', {'form': form, 'nota': nota, 'mensaje': mensaje})
+
+@login_required
+def eliminar_nota(request, nota_id):
+    nota = get_object_or_404(Calificacion, id=nota_id)
+    if request.method == 'POST':
+        nota.delete()
+        return redirect('ver_notas_curso')
+    return render(request, 'eliminar_nota.html', {'nota': nota})
+
+@login_required
+def registrar_asistencia_alumno(request):
+    perfil = getattr(request.user, 'perfil', None)
+    if perfil and perfil.tipo_usuario == 'profesor':
+        # Solo asignaturas del profesor
+        asignaturas = Asignatura.objects.filter(profesor_responsable__user=request.user)
+        estudiantes = Estudiante.objects.filter(cursos__asignaturas__in=asignaturas).distinct()
+    elif perfil and perfil.tipo_usuario == 'director':
+        asignaturas = Asignatura.objects.all()
+        estudiantes = Estudiante.objects.all()
+    else:
+        return HttpResponseForbidden("No tienes permiso para acceder aquí.")
+
+    mensaje = ""
+    if request.method == 'POST':
+        for estudiante_id in request.POST.getlist('estudiante'):
+            asignatura_id = request.POST.get('asignatura')
+            presente = request.POST.get(f'presente_{estudiante_id}') == 'on'
+            fecha = request.POST.get('fecha')
+            observacion = request.POST.get(f'observacion_{estudiante_id}', '')
+            AsistenciaAlumno.objects.update_or_create(
+                estudiante_id=estudiante_id,
+                asignatura_id=asignatura_id,
+                fecha=fecha,
+                defaults={'presente': presente, 'observacion': observacion}
+            )
+        mensaje = "Asistencia registrada correctamente."
+    today = date.today().isoformat()
+    return render(request, 'registrar_asistencia_alumno.html', {
+        'asignaturas': asignaturas,
+        'estudiantes': estudiantes,
+        'mensaje': mensaje,
+        'today': today,
+    })
+
+@login_required
+def ver_asistencia_alumno(request):
+    perfil = getattr(request.user, 'perfil', None)
+    fecha = request.GET.get('fecha', '')
+    semana = request.GET.get('semana', '')
+    asignatura_id = request.GET.get('asignatura', '')
+
+    if perfil and perfil.tipo_usuario == 'profesor':
+        asignaturas = Asignatura.objects.filter(profesor_responsable__user=request.user)
+        asistencias = AsistenciaAlumno.objects.filter(asignatura__in=asignaturas)
+    elif perfil and perfil.tipo_usuario == 'director':
+        asignaturas = Asignatura.objects.all()
+        asistencias = AsistenciaAlumno.objects.all()
+    else:
+        return HttpResponseForbidden("No tienes permiso para acceder aquí.")
+
+    # Filtrar por asignatura si se selecciona
+    if asignatura_id:
+        asistencias = asistencias.filter(asignatura_id=asignatura_id)
+
+    # Filtrar por fecha exacta
+    if fecha:
+        asistencias = asistencias.filter(fecha=fecha)
+
+    # Filtrar por semana (YYYY-Www formato ISO)
+    if semana:
+        try:
+            year, week = map(int, semana.split('-W'))
+            first_day = datetime.strptime(f'{year}-W{week}-1', "%Y-W%W-%w").date()
+            last_day = first_day + timedelta(days=6)
+            asistencias = asistencias.filter(fecha__range=[first_day, last_day])
+        except Exception:
+            pass
+
+    return render(request, 'ver_asistencia_alumno.html', {
+        'asistencias': asistencias,
+        'asignaturas': asignaturas,
+        'fecha': fecha,
+        'semana': semana,
+        'asignatura_id': asignatura_id,
+    })
+
+@login_required
+def registrar_asistencia_profesor(request):
+    perfil = getattr(request.user, 'perfil', None)
+    if perfil and perfil.tipo_usuario == 'director':
+        profesores = Profesor.objects.all()
+        asignaturas = Asignatura.objects.all()
+    else:
+        return HttpResponseForbidden("No tienes permiso para acceder aquí.")
+
+    mensaje = ""
+    if request.method == 'POST':
+        for profesor_id in request.POST.getlist('profesor'):
+            asignatura_id = request.POST.get('asignatura')
+            presente = request.POST.get(f'presente_{profesor_id}') == 'on'
+            fecha = request.POST.get('fecha')
+            observacion = request.POST.get(f'observacion_{profesor_id}', '')
+            AsistenciaProfesor.objects.update_or_create(
+                profesor_id=profesor_id,
+                asignatura_id=asignatura_id,
+                fecha=fecha,
+                defaults={'presente': presente, 'observacion': observacion}
+            )
+        mensaje = "Asistencia de profesor registrada correctamente."
+    today = date.today().isoformat()
+    return render(request, 'registrar_asistencia_profesor.html', {
+        'asignaturas': asignaturas,
+        'profesores': profesores,
+        'mensaje': mensaje,
+        'today': today,
+    })
+
+@login_required
+def ver_asistencia_profesor(request):
+    perfil = getattr(request.user, 'perfil', None)
+    fecha = request.GET.get('fecha', '')
+    semana = request.GET.get('semana', '')
+    year = request.GET.get('year', '')
+
+    if perfil and perfil.tipo_usuario == 'director':
+        asistencias = AsistenciaProfesor.objects.all()
+    elif perfil and perfil.tipo_usuario == 'profesor':
+        asistencias = AsistenciaProfesor.objects.filter(profesor__user=request.user)
+    else:
+        return HttpResponseForbidden("No tienes permiso para acceder aquí.")
+
+    # Filtrar por fecha exacta
+    if fecha:
+        asistencias = asistencias.filter(fecha=fecha)
+
+    # Filtrar por semana (YYYY-Www formato ISO)
+    if semana:
+        try:
+            year_w, week = semana.split('-W')
+            year_w = int(year_w)
+            week = int(week)
+            first_day = datetime.strptime(f'{year_w}-W{week}-1', "%Y-W%W-%w").date()
+            last_day = first_day + timedelta(days=6)
+            asistencias = asistencias.filter(fecha__range=[first_day, last_day])
+        except Exception:
+            pass
+
+    # Filtrar por año
+    if year:
+        asistencias = asistencias.filter(fecha__year=year)
+
+    return render(request, 'ver_asistencia_profesor.html', {
+        'asistencias': asistencias,
+        'fecha': fecha,
+        'semana': semana,
+        'year': year,
+    })
+
+from .forms import AsistenciaAlumnoForm
+
+@login_required
+def editar_asistencia_alumno(request, asistencia_id):
+    asistencia = get_object_or_404(AsistenciaAlumno, id=asistencia_id)
+    mensaje = ""
+    if request.method == 'POST':
+        form = AsistenciaAlumnoForm(request.POST, instance=asistencia)
+        if form.is_valid():
+            form.save()
+            mensaje = "Asistencia modificada con éxito."
+            return redirect('ver_asistencia_alumno')
+    else:
+        form = AsistenciaAlumnoForm(instance=asistencia)
+    return render(request, 'editar_asistencia_alumno.html', {
+        'form': form,
+        'asistencia': asistencia,
+        'mensaje': mensaje,
+    })
+
+from django.shortcuts import render, get_object_or_404, redirect
+from .forms import AsistenciaProfesorForm
+from .models import AsistenciaProfesor
+from django.contrib.auth.decorators import login_required
+
+@login_required
+def editar_asistencia_profesor(request, asistencia_id):
+    asistencia = get_object_or_404(AsistenciaProfesor, id=asistencia_id)
+    mensaje = ""
+    if request.method == 'POST':
+        form = AsistenciaProfesorForm(request.POST, instance=asistencia)
+        if form.is_valid():
+            form.save()
+            mensaje = "Asistencia modificada con éxito."
+            return redirect('ver_asistencia_profesor')
+    else:
+        form = AsistenciaProfesorForm(instance=asistencia)
+    return render(request, 'editar_asistencia_profesores.html', {
+        'form': form,
+        'asistencia': asistencia,
+        'mensaje': mensaje,
+    })
+
+from .forms import HorarioCursoForm
+
+@login_required
+def agregar_horario(request, curso_id):
+    if not hasattr(request.user, 'perfil') or request.user.perfil.tipo_usuario != 'director':
+        return HttpResponseForbidden("No tienes permiso para acceder aquí.")
+    curso = get_object_or_404(Curso, id=curso_id)
+    mensaje = ""
+    if request.method == 'POST':
+        form = HorarioCursoForm(request.POST)
+        if form.is_valid():
+            horario = form.save(commit=False)
+            horario.curso = curso
+            horario.save()
+            mensaje = "Horario agregado correctamente."
+            return redirect('ver_horario_curso')
+    else:
+        form = HorarioCursoForm()
+    return render(request, 'agregar_horario.html', {'form': form, 'curso': curso, 'mensaje': mensaje})
+
+@login_required
+def editar_horario(request, horario_id):
+    if not hasattr(request.user, 'perfil') or request.user.perfil.tipo_usuario != 'director':
+        return HttpResponseForbidden("No tienes permiso para acceder aquí.")
+    horario = get_object_or_404(HorarioCurso, id=horario_id)
+    mensaje = ""
+    if request.method == 'POST':
+        form = HorarioCursoForm(request.POST, instance=horario)
+        if form.is_valid():
+            form.save()
+            mensaje = "Horario modificado correctamente."
+            return redirect('ver_horario_curso')
+    else:
+        form = HorarioCursoForm(instance=horario)
+    return render(request, 'editar_horario.html', {'form': form, 'horario': horario, 'mensaje': mensaje})
+
+@login_required
+def eliminar_horario(request, horario_id):
+    if not hasattr(request.user, 'perfil') or request.user.perfil.tipo_usuario != 'director':
+        return HttpResponseForbidden("No tienes permiso para acceder aquí.")
+    horario = get_object_or_404(HorarioCurso, id=horario_id)
+    if request.method == 'POST':
+        horario.delete()
+        return redirect('ver_horario_curso')
+    return render(request, 'eliminar_horario.html', {'horario': horario})
 
 
 

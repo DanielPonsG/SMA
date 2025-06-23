@@ -1,58 +1,93 @@
 <!-- filepath: c:\Users\Danie\Desktop\Proyecto_Titulo\sma\templates\gestionar_horarios.html -->
 {% extends "index_master.html" %}
+{% load widget_tweaks %}
 {% block content %}
 <div class="right_col" role="main">
   <div class="container-fluid">
-    <h2>Horarios de {{ curso.nombre }}</h2>
+    <h2 class="mb-4">Gestionar Horarios de {{ curso.nombre }}</h2>
     {% if mensaje %}
       <div class="alert alert-success">{{ mensaje }}</div>
     {% endif %}
-    <form method="post" class="mb-4">
-      {% csrf_token %}
-      {{ form.as_p }}
-      <button type="submit" class="btn btn-success">Agregar Horario</button>
-    </form>
-    <table class="table table-bordered">
-      <thead>
-        <tr>
-          <th>Día</th>
-          <th>Hora Inicio</th>
-          <th>Hora Fin</th>
-          <th>Asignatura</th>
-          <th>Profesor</th>
-        </tr>
-      </thead>
-      <tbody>
-        {% for horario in horarios %}
-        <tr>
-          <td>{{ horario.get_dia_display }}</td>
-          <td>{{ horario.hora_inicio }}</td>
-          <td>{{ horario.hora_fin }}</td>
-          <td>
-            {% if curso.asignaturas.all %}
-              {% for asignatura in curso.asignaturas.all %}
-                {{ asignatura.nombre }}{% if not forloop.last %}, {% endif %}
-              {% endfor %}
-            {% else %}
-              Sin asignaturas
-            {% endif %}
-          </td>
-          <td>
-            {% if curso.profesor_responsable %}
-              {{ curso.profesor_responsable }}
-            {% else %}
-              Sin profesor
-            {% endif %}
-          </td>
-        </tr>
-        {% empty %}
-        <tr>
-          <td colspan="5" class="text-center">No hay horarios registrados.</td>
-        </tr>
-        {% endfor %}
-      </tbody>
-    </table>
-    <a href="{% url 'listar_cursos' %}" class="btn btn-secondary">Volver a Cursos</a>
+    <div class="card p-4 shadow-sm mb-4">
+      <h5 class="mb-3">Agregar Horario</h5>
+      <form method="post" id="horario-form">
+        {% csrf_token %}
+        <div class="row mb-3">
+          <div class="col-md-3">
+            {{ form.dia.label_tag }} {{ form.dia|add_class:"form-select" }}
+          </div>
+          <div class="col-md-3">
+            {{ form.hora_inicio.label_tag }} {{ form.hora_inicio|add_class:"form-control" }}
+          </div>
+          <div class="col-md-3">
+            {{ form.hora_fin.label_tag }} {{ form.hora_fin|add_class:"form-control" }}
+          </div>
+          <div class="col-md-3">
+            {{ form.asignatura.label_tag }} {{ form.asignatura|add_class:"form-select" }}
+          </div>
+        </div>
+        <div class="d-flex gap-2">
+          <button type="submit" class="btn btn-success">Agregar Horario</button>
+          <a href="{% url 'listar_cursos' %}" class="btn btn-secondary">Volver a Cursos</a>
+        </div>
+      </form>
+    </div>
+
+    <div class="card shadow-sm">
+      <div class="card-header bg-primary text-white">
+        <h5 class="mb-0">Horarios Actuales</h5>
+      </div>
+      <div class="card-body p-0">
+        <table class="table table-bordered mb-0">
+          <thead class="table-light">
+            <tr>
+              <th>Día</th>
+              <th>Hora Inicio</th>
+              <th>Hora Fin</th>
+              <th>Asignatura</th>
+              <th>Profesor</th>
+              <th>Acciones</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for horario in horarios %}
+            <tr>
+              <td>{{ horario.get_dia_display }}</td>
+              <td>{{ horario.hora_inicio|time:"H:i" }}</td>
+              <td>{{ horario.hora_fin|time:"H:i" }}</td>
+              <td>
+                {% if horario.asignatura %}
+                  {{ horario.asignatura.nombre }}
+                {% else %}
+                  <span class="text-muted">Sin asignatura</span>
+                {% endif %}
+              </td>
+              <td>
+                {% if horario.asignatura and horario.asignatura.profesor_responsable %}
+                  {{ horario.asignatura.profesor_responsable }}
+                {% else %}
+                  <span class="text-muted">Sin profesor</span>
+                  {% if request.user.perfil.tipo_usuario == 'director' and horario.asignatura %}
+                    <a href="{% url 'editar_asignatura' horario.asignatura.id %}" class="btn btn-sm btn-outline-primary ms-2">Asignar profesor</a>
+                  {% endif %}
+                {% endif %}
+              </td>
+              <td>
+                {% if request.user.perfil.tipo_usuario == 'director' %}
+                  <a href="{% url 'editar_horario' horario.id %}" class="btn btn-sm btn-primary">Editar</a>
+                  <a href="{% url 'eliminar_horario' horario.id %}" class="btn btn-sm btn-danger" onclick="return confirm('¿Seguro que deseas eliminar este horario?');">Eliminar</a>
+                {% endif %}
+              </td>
+            </tr>
+            {% empty %}
+            <tr>
+              <td colspan="6" class="text-center">No hay horarios registrados.</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
   </div>
 </div>
 {% endblock %}

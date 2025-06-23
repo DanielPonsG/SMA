@@ -15,12 +15,15 @@
               <a href="?tipo=estudiante" class="btn btn-outline-primary btn-sm {% if tipo == 'estudiante' %}active{% endif %}">Estudiante</a>
               <a href="?tipo=profesor" class="btn btn-outline-primary btn-sm {% if tipo == 'profesor' %}active{% endif %}">Profesor</a>
             </div>
-            <form method="get" class="row g-2 mb-4">
+            <form method="get" class="row g-2 mb-2">
               <input type="hidden" name="tipo" value="{{ tipo }}">
-              <div class="col-9">
+              <div class="col-7">
                 <input type="text" name="q" class="form-control" placeholder="Buscar por nombre, apellido o código..." value="{{ query }}">
               </div>
               <div class="col-3">
+                <input type="number" name="id" class="form-control" placeholder="Buscar por ID..." value="{{ seleccionado_id }}">
+              </div>
+              <div class="col-2">
                 <button type="submit" class="btn btn-primary w-100">Buscar</button>
               </div>
             </form>
